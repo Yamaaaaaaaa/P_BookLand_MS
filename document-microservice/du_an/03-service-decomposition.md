@@ -419,4 +419,4 @@ Monolith (30 entities, 1 DB)
 
 ---
 
-*← [02 - Kiến trúc mục tiêu](./02-target-architecture.md) | [04 - API Gateway →](./04-api-gateway.md)*
+*← [02 - Kiến trúc mục tiêu](./02-target-architecture.md) | [04 - Đặc tả Chi tiết các Dịch vụ](./04-microservices-specifications.md) →*
