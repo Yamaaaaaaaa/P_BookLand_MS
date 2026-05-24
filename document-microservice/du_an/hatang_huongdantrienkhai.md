@@ -157,15 +157,18 @@ Hệ thống của bạn có tới 8 microservices và 5 cụm Database/Broker c
 
 #### Bước 1: Khởi động Minikube với cấu hình cao
 > [!WARNING]
-> Hãy đảm bảo rằng bạn thoát hoàn toàn quyền root (nếu có), đứng ở user thường (ví dụ: `vboxuser`) trên máy ảo Ubuntu để vận hành Docker và Minikube. Máy tính vật lý của bạn cần trống tối thiểu **12GB RAM**.
+> Hãy đảm bảo rằng bạn thoát hoàn toàn quyền root (nếu có), đứng ở user thường (ví dụ: `vboxuser`) trên máy ảo Ubuntu để vận hành Docker và Minikube. Máy tính vật lý của bạn cần trống tối thiểu **10GB RAM** (Và máy ảo Ubuntu của bạn trong VirtualBox nên được cấp phát khoảng **8GB RAM**).
 
 Mở terminal máy ảo Ubuntu của bạn và chạy các lệnh:
 ```bash
 # 1. Xóa cluster cũ bị lỗi hoặc thừa để làm sạch tài nguyên ổ cứng
 minikube delete
 
-# 2. Khởi động cấu hình Minikube driver Docker tối ưu
-minikube start --driver=docker --cpus=4 --memory=8192 --disk-size=30g
+# 2. Khởi động cấu hình Minikube driver Docker tối ưu tiết kiệm tài nguyên
+minikube start --driver=docker --cpus=3 --memory=6144 --disk-size=20g
+
+# 3. Cài đặt công cụ điều khiển kubectl (Nếu máy ảo báo 'kubectl not found')
+sudo snap install kubectl --classic
 ```
 
 #### Bước 2: Kích hoạt Addon Ingress
@@ -187,7 +190,7 @@ Chúng ta cần triển khai tầng Stateful (Cơ sở dữ liệu & Message Bro
 
 #### Bước 1: Tạo các tệp Manifest cấu hình cho từng hạ tầng
 
-##### 1. MySQL (`mysql-deployment.yaml`)
+##### 1. MySQL (`k8s/01-infrastructure/mysql.yaml`)
 > [!IMPORTANT]
 > Cấu hình duy nhất 1 Instance MySQL duy nhất chạy 5 Database con (`bookland_id`, `bookland_user`, `bookland_book`, `bookland_order`, `bookland_event`).
 ```yaml
@@ -248,7 +251,7 @@ spec:
             claimName: mysql-data
 ```
 
-##### 2. Apache Kafka ở chế độ KRaft (`kafka-deployment.yaml`)
+##### 2. Apache Kafka ở chế độ KRaft (`k8s/01-infrastructure/kafka.yaml`)
 > [!TIP]
 > Sử dụng phiên bản KRaft (Kafka Raft Metadata mode) loại bỏ hoàn toàn sự phụ thuộc vào Zookeeper, giúp cụm cực kỳ nhẹ, tối ưu RAM và CPU cho máy ảo.
 ```yaml
@@ -323,7 +326,7 @@ spec:
             claimName: kafka-data
 ```
 
-##### 3. MongoDB cho Notification Service (`mongodb-deployment.yaml`)
+##### 3. MongoDB cho Notification Service (`k8s/01-infrastructure/mongodb.yaml`)
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -384,7 +387,7 @@ spec:
             claimName: mongo-data
 ```
 
-##### 4. Elasticsearch cho Search Service (`elasticsearch-deployment.yaml`)
+##### 4. Elasticsearch cho Search Service (`k8s/01-infrastructure/elasticsearch.yaml`)
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -447,7 +450,7 @@ spec:
             claimName: es-data
 ```
 
-##### 5. MinIO cho File Service (`minio-deployment.yaml`)
+##### 5. MinIO cho File Service (`k8s/01-infrastructure/minio.yaml`)
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -495,6 +498,7 @@ spec:
         - name: minio
           image: minio/minio:latest
           command:
+            - minio
             - server
             - /data
             - --console-address
@@ -521,15 +525,14 @@ spec:
 #### Bước 2: Khởi chạy tầng hạ tầng vào K8s Cluster
 Tiến hành áp dụng các cấu hình hạ tầng vào namespace `bookland`:
 ```bash
-# Đảm bảo bạn đã tạo namespace bookland
+# 1. Đứng tại thư mục gốc của dự án trên máy ảo
+cd /home/vboxuser/P_BookLand_MS
+
+# 2. Đảm bảo bạn đã tạo namespace bookland
 kubectl create namespace bookland --dry-run=client -o yaml | kubectl apply -f -
 
-# Áp dụng tất cả các file cấu hình database & broker
-kubectl apply -f mysql-deployment.yaml
-kubectl apply -f kafka-deployment.yaml
-kubectl apply -f mongodb-deployment.yaml
-kubectl apply -f elasticsearch-deployment.yaml
-kubectl apply -f minio-deployment.yaml
+# 3. Áp dụng tất cả các file cấu hình database & broker từ thư mục k8s/01-infrastructure/
+kubectl apply -f k8s/01-infrastructure/
 ```
 
 **Xác minh trạng thái**: Đảm bảo tất cả PVC đều ở trạng thái `Bound` và toàn bộ các Pod Database/Broker phải báo trạng thái **`Running (1/1)`** trước khi chuyển sang bước tiếp theo:
@@ -541,38 +544,45 @@ kubectl get pvc,pods -n bookland
 
 ### Giai đoạn 3: Đồng bộ Git & Đóng gói Ứng dụng cục bộ (Dockerize) (Ngày 3)
 
-Trong môi trường thực tế, bạn viết code trên máy thật **Windows Host**, sau đó cần đẩy (Push) lên Git và kéo (Pull) về **máy ảo Ubuntu** để tiến hành biên dịch và đóng gói Docker. 
+Trong môi trường thực tế, bạn viết code trên máy thật **Windows Host**, sau đó cần đẩy (Push) lên Git và kéo (Pull) về **máy ảo Ubuntu** để tiến hành đóng gói Docker.
 
-Bằng cách sử dụng tính năng chia sẻ trực tiếp Docker Daemon của Minikube với máy ảo, ta có thể build trực tiếp các project Spring Boot thành Docker Image nội bộ cực nhanh mà không cần đẩy lên Docker Hub.
+> [!TIP]
+> **Điểm cải tiến cực lớn:** Hệ thống đã được nâng cấp lên **Dockerfile đa giai đoạn (Multi-stage Dockerfile)**. Toàn bộ tiến trình biên dịch code Java ra file JAR và đóng gói sẽ diễn ra **100% bên trong container Docker**. Bạn **không cần phải cài đặt JDK 17 hay Maven trên máy ảo Ubuntu** nữa! Điều này giúp tiết kiệm tài nguyên máy ảo và tăng tốc độ triển khai vượt trội!
 
-#### Bước 1: Đồng bộ hóa mã nguồn thông qua Git
+#### Bước 1: Cài đặt và cấu hình Git trên máy ảo Ubuntu (Nếu chưa có)
+
+Nếu máy ảo Ubuntu của bạn chưa được cài đặt Git, hãy mở Terminal máy ảo và chạy:
+```bash
+# 1. Cập nhật và cài đặt Git
+sudo apt update
+sudo apt install git -y
+
+# 2. Cấu hình định danh Git cục bộ
+git config --global user.name "Your Name"
+git config --global user.email "your-email@example.com"
+```
+
+#### Bước 2: Đồng bộ hóa mã nguồn thông qua Git
 
 1. **Tại máy thật Windows Host (nơi viết code)**:
-   Mở Git Bash hoặc Terminal trên Windows tại thư mục gốc dự án và chạy:
+   Mở Git Bash hoặc Terminal trên Windows tại thư mục gốc dự án và đẩy nhánh `dev` lên:
    ```bash
    git add .
    git commit -m "deploy: update kubernetes deployment configurations"
-   git push origin main
+   git push origin dev
    ```
 2. **Tại máy ảo Ubuntu (vboxuser)**:
-   Mở terminal máy ảo, di chuyển vào thư mục dự án và tiến hành pull code mới nhất về:
-   ```bash
-   cd /home/vboxuser/P_BookLand_MS
-   git pull origin main
-   ```
-
-#### Bước 2: Biên dịch các dự án Spring Boot thành file JAR (Trong máy ảo)
-Trước khi đóng gói Docker, ta cần biên dịch mã nguồn Java thành các file thực thi `.jar`.
-> [!NOTE]
-> Đảm bảo máy ảo của bạn đã được cài đặt sẵn JDK 17 và Maven để chạy biên dịch. Nếu chưa cài, chạy lệnh nhanh:
-> `sudo apt update && sudo apt install openjdk-17-jdk maven -y`
-
-Thực hiện biên dịch toàn bộ hệ thống ngay tại thư mục gốc dự án trong máy ảo:
-```bash
-# Biên dịch và đóng gói file JAR (Bỏ qua chạy test để tiết kiệm thời gian)
-mvn clean package -DskipTests
-```
-*Đảm bảo tất cả các service báo build `SUCCESS` và sinh ra tệp `target/*.jar` tương ứng.*
+   *   **Trường hợp chưa có thư mục code:** Bạn clone thẳng nhánh `dev` về thư mục home:
+       ```bash
+       cd /home/vboxuser
+       git clone -b dev https://github.com/Yamaaaaaaaa/P_BookLand_MS.git
+       ```
+   *   **Trường hợp đã có thư mục code cũ:** Bạn pull nhánh `dev` về để ghi đè code mới nhất:
+       ```bash
+       cd /home/vboxuser/P_BookLand_MS
+       git fetch
+       git checkout -f dev
+       ```
 
 #### Bước 3: Trỏ terminal máy ảo vào Docker Daemon của Minikube
 Tại cửa sổ Terminal của máy ảo Ubuntu, chạy lệnh liên kết môi trường:
@@ -581,35 +591,35 @@ eval $(minikube -p minikube docker-env)
 ```
 *(Từ lúc này, mọi lệnh `docker build` chạy trong terminal này sẽ ghi trực tiếp vào Registry của cụm Minikube).*
 
-#### Bước 4: Đóng gói Docker Image cho từng Microservice từ file JAR
-Chạy lệnh build ảnh Docker cho từng service từ file JAR đã biên dịch ở Bước 2:
+#### Bước 4: Đóng gói Docker Image trực tiếp từ mã nguồn (Containerized Build)
+Đứng tại thư mục gốc dự án `/home/vboxuser/P_BookLand_MS` trong máy ảo, chạy lệnh build ảnh Docker cho từng service. Docker sẽ tự động biên dịch và đóng gói JAR ngay trong container:
 ```bash
 # 1. Build API Gateway
-docker build -t bookland/api-gateway:1.0 ./services/api-gateway
+docker build -t bookland/api-gateway:1.0 -f services/api-gateway/Dockerfile .
 
 # 2. Build Identity Service
-docker build -t bookland/identity-service:1.0 ./services/identity-service
+docker build -t bookland/identity-service:1.0 -f services/identity-service/Dockerfile .
 
 # 3. Build User Service
-docker build -t bookland/user-service:1.0 ./services/user-service
+docker build -t bookland/user-service:1.0 -f services/user-service/Dockerfile .
 
 # 4. Build Book Service
-docker build -t bookland/book-service:1.0 ./services/book-service
+docker build -t bookland/book-service:1.0 -f services/book-service/Dockerfile .
 
 # 5. Build Order Service
-docker build -t bookland/order-service:1.0 ./services/order-service
+docker build -t bookland/order-service:1.0 -f services/order-service/Dockerfile .
 
 # 6. Build Event Service
-docker build -t bookland/event-service:1.0 ./services/event-service
+docker build -t bookland/event-service:1.0 -f services/event-service/Dockerfile .
 
 # 7. Build Notification Service
-docker build -t bookland/notification-service:1.0 ./services/notification-service
+docker build -t bookland/notification-service:1.0 -f services/notification-service/Dockerfile .
 
 # 8. Build Search Service
-docker build -t bookland/search-service:1.0 ./services/search-service
+docker build -t bookland/search-service:1.0 -f services/search-service/Dockerfile .
 
 # 9. Build File Service
-docker build -t bookland/file-service:1.0 ./services/file-service
+docker build -t bookland/file-service:1.0 -f services/file-service/Dockerfile .
 ```
 Kiểm tra danh sách ảnh K8s đã sẵn sàng trong cụm Minikube:
 ```bash
@@ -618,144 +628,95 @@ docker images | grep bookland
 
 ---
 
-### Giai đoạn 4: Triển khai các Service nghiệp vụ lên Kubernetes (Ngày 4)
+### Giai đoạn 4: Hướng dẫn Triển khai Từng bước lên Kubernetes (Minikube)
 
-Chúng ta viết các file Manifest Deployments & Services (loại `ClusterIP`) cho các Service nghiệp vụ. Điểm mấu chốt là **tất cả 5 core services sẽ kết nối đến cùng 1 DNS `mysql`**.
+Sau khi đã lấy toàn bộ mã nguồn của nhánh `dev` từ Git về máy ảo Ubuntu, toàn bộ các tệp tin cấu hình tài nguyên Kubernetes (K8s Manifests) đã được xếp gọn gàng trong thư mục `/home/vboxuser/P_BookLand_MS/k8s`. 
 
-#### Bước 1: Cấu hình trỏ DNS nội bộ của các microservice
+Bạn chỉ cần thực hiện lần lượt các bước chuẩn hóa dưới đây để triển khai hệ thống:
 
-Khi viết file YAML, bạn trỏ kết nối thông qua các tên miền DNS tự động được K8s cấp phát cho các hạ tầng đã tạo ở Giai đoạn 2:
-*   **MySQL URL cho 5 core services**: `jdbc:mysql://mysql:3306/bookland_id` (hoặc `bookland_user`, `bookland_book`, `bookland_order`, `bookland_event` tương ứng).
-*   **Kafka Bootstrap Servers**: `kafka:9092`
-*   **MongoDB Uri**: `mongodb://root:root@mongodb:27017/notification_db?authSource=admin`
-*   **Elasticsearch Uri**: `http://elasticsearch:9200`
-*   **MinIO Uri**: `http://minio:9000`
+#### 📂 Bước 1: Khởi tạo Namespace và Deploy tầng Hạ tầng (Database & Kafka)
 
-##### Ví dụ mẫu cấu hình tệp tin `identity-service.yaml`:
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: identity-service
-  namespace: bookland
-spec:
-  ports:
-    - port: 8081
-      targetPort: 8081
-  selector:
-    app: identity-service
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: identity-service
-  namespace: bookland
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: identity-service
-  template:
-    metadata:
-      labels:
-        app: identity-service
-    spec:
-      containers:
-        - name: identity-service
-          image: bookland/identity-service:1.0
-          imagePullPolicy: IfNotPresent  # Ép K8s sử dụng ảnh cục bộ vừa build ở Giai đoạn 3
-          env:
-            - name: SPRING_DATASOURCE_URL
-              value: "jdbc:mysql://mysql:3306/bookland_id?createDatabaseIfNotExist=true"
-            - name: SPRING_DATASOURCE_USERNAME
-              value: "root"
-            - name: SPRING_DATASOURCE_PASSWORD
-              value: "root"
-            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
-              value: "kafka:9092"
-          ports:
-            - containerPort: 8081
-```
+Chúng ta tiến hành tạo phân vùng ảo biệt lập `bookland` và deploy các dịch vụ Stateful (MySQL, Kafka, MongoDB, Elasticsearch, MinIO) trước:
 
-#### Bước 2: Triển khai toàn bộ các Service nghiệp vụ lên cụm
-Chạy các lệnh triển khai tuần tự:
 ```bash
-kubectl apply -f identity-service.yaml
-kubectl apply -f user-service.yaml
-kubectl apply -f book-service.yaml
-kubectl apply -f order-service.yaml
-kubectl apply -f event-service.yaml
-kubectl apply -f notification-service.yaml
-kubectl apply -f search-service.yaml
-kubectl apply -f file-service.yaml
+# 1. Di chuyển vào thư mục dự án trên máy ảo
+cd /home/vboxuser/P_BookLand_MS
+
+# 2. Tạo namespace 'bookland'
+kubectl create namespace bookland --dry-run=client -o yaml | kubectl apply -f -
+
+# 3. Triển khai toàn bộ cụm hạ tầng
+kubectl apply -f k8s/01-infrastructure/
 ```
 
-#### Bước 3: Triển khai API Gateway
-Triển khai file `api-gateway.yaml` đứng chặn trước để làm cổng kiểm soát duy nhất:
+**🔍 Xác minh trạng thái:**
+Bạn hãy gõ lệnh sau để giám sát trạng thái khởi động của các Pod hạ tầng. Hãy **chờ cho đến khi tất cả 5 pod (`mysql-0`, `kafka-0`, `mongodb-0`, `elasticsearch-0`, `minio-0`) đều báo trạng thái `Running (1/1)` hoàn toàn** (nhấn `Ctrl + C` để thoát):
 ```bash
-kubectl apply -f api-gateway.yaml
+kubectl get pods -n bookland -w
 ```
-Kiểm tra xem tất cả các Pod nghiệp vụ đã báo **`Running (1/1)`**:
+
+#### 🐳 Bước 2: Liên kết Docker máy ảo và Build các Docker Images cục bộ
+
+Để build trực tiếp các ảnh Docker vào Registry nội bộ của Minikube, chạy lệnh:
+
+```bash
+# 1. Trỏ terminal vào Docker Daemon của Minikube
+eval $(minikube -p minikube docker-env)
+
+# 2. Đóng gói 9 microservices bằng Dockerfile đa giai đoạn
+docker build -t bookland/api-gateway:1.0 -f services/api-gateway/Dockerfile .
+docker build -t bookland/identity-service:1.0 -f services/identity-service/Dockerfile .
+docker build -t bookland/user-service:1.0 -f services/user-service/Dockerfile .
+docker build -t bookland/book-service:1.0 -f services/book-service/Dockerfile .
+docker build -t bookland/order-service:1.0 -f services/order-service/Dockerfile .
+docker build -t bookland/event-service:1.0 -f services/event-service/Dockerfile .
+docker build -t bookland/notification-service:1.0 -f services/notification-service/Dockerfile .
+docker build -t bookland/file-service:1.0 -f services/file-service/Dockerfile .
+docker build -t bookland/search-service:1.0 -f services/search-service/Dockerfile .
+```
+
+#### 🚀 Bước 3: Triển khai các dịch vụ nghiệp vụ (Stateless Services)
+
+Triển khai đồng loạt 9 dịch vụ nghiệp vụ (bao gồm cả API Gateway):
+
+```bash
+kubectl apply -f k8s/02-services/
+```
+
+**🔍 Xác minh trạng thái:**
+Đảm bảo tất cả 9 dịch vụ đã báo trạng thái **`Running`**:
 ```bash
 kubectl get pods -n bookland
 ```
 
----
+#### 🌐 Bước 4: Triển khai cấu hình định tuyến Ingress
 
-### Giai đoạn 5: Cấu hình Ingress & Thông mạng ngoài (Ngày 5)
+Cấu hình Ingress Controller để đón tiếp nhận tên miền `api.bookland.local` từ ngoài đi vào API Gateway bên trong cụm:
 
-Mục đích là giúp các ứng dụng Client chạy ở máy chủ Windows thật kết nối mượt mà vào API Gateway chạy trong K8s bên trong máy ảo thông qua tên miền **`api.bookland.local`**.
-
-#### Bước 1: Triển khai cấu hình định tuyến Ingress
-Tạo file **`bookland-ingress.yaml`** để định tuyến mọi request gửi tới tên miền `api.bookland.local` đi thẳng vào dịch vụ `api-gateway`:
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: bookland-ingress
-  namespace: bookland
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
-spec:
-  rules:
-    - host: api.bookland.local
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: api-gateway
-                port:
-                  number: 8080
-```
-Tiến hành áp dụng file cấu hình:
 ```bash
-kubectl apply -f bookland-ingress.yaml
+kubectl apply -f k8s/03-ingress/
 ```
 
-#### Bước 2: Duy trì Network Tunnel nội bộ trong máy ảo
-Ingress Controller trong Minikube cần một tiến trình gán IP LoadBalancer. Hãy mở một tab Terminal SSH mới trên máy ảo Ubuntu (không đóng tab cũ) và chạy lệnh:
-```bash
-minikube tunnel
-```
-*Hãy luôn duy trì cửa sổ này chạy ngầm trong suốt quá trình phát triển dự án.*
-Kiểm tra trạng thái IP của Ingress:
-```bash
-kubectl get ingress -n bookland
-```
-Bạn sẽ thấy cột `ADDRESS` hiển thị IP là `127.0.0.1`.
+#### 🔌 Bước 5: Cấu hình Ingress & Thông mạng ngoài về Windows Host
 
-#### Bước 3: Cấu hình file hosts ở máy Windows thật để thông mạng biên
-Để toàn bộ trình duyệt Web, phần mềm Postman, và ứng dụng Mobile Expo chạy ngoài máy thật Windows có thể giao tiếp với máy ảo:
-1. Mở Terminal máy ảo Ubuntu, chạy lệnh `ip a` để lấy địa chỉ IP mạng nội bộ của VirtualBox (ví dụ: card `enp0s3` hoặc card Bridged Adapter, có dạng IP LAN như `192.168.1.50`).
-2. Trên máy tính Windows thật của bạn, mở phần mềm **Notepad** dưới quyền quản trị viên (**Run as Administrator**).
-3. Mở file tại đường dẫn: `C:\Windows\System32\drivers\etc\hosts`.
-4. Thêm dòng cấu hình sau vào cuối file:
-   ```text
-   192.168.1.50  api.bookland.local
-   ```
-5. Lưu file lại. Giờ đây, khi bạn thực hiện gọi các API như `http://api.bookland.local/auth/login`, request sẽ được định tuyến thẳng qua IP máy ảo VirtualBox, đi qua quy tắc `iptables` vào cụm Minikube, được Ingress Controller phân phối thẳng vào API Gateway để xử lý.
+Để máy thật Windows của bạn có thể gọi API trực tiếp vào Kubernetes Cluster trong máy ảo:
+
+1.  **Duy trì Network Tunnel trong máy ảo:**
+    Mở một cửa sổ Terminal mới trong máy ảo Ubuntu (không được đóng) và chạy:
+    ```bash
+    minikube tunnel
+    ```
+2.  **Lấy IP máy ảo Ubuntu:**
+    Chạy lệnh `ip a` trên máy ảo Ubuntu để lấy IP card mạng LAN của máy ảo (ví dụ: card card Host-only/Bridged, thường có dải mạng LAN dạng `192.168.1.50` hoặc `192.168.56.101`).
+3.  **Cấu hình file hosts trên máy thật Windows:**
+    *   Mở **Notepad** dưới quyền quản trị viên (**Run as Administrator**).
+    *   Mở tệp tin tại đường dẫn `C:\Windows\System32\drivers\etc\hosts`.
+    *   Thêm dòng sau vào cuối tệp tin và lưu lại:
+        ```text
+        192.168.1.50  api.bookland.local
+        ```
+        *(Hãy thay thế `192.168.1.50` bằng IP thực tế của máy ảo Ubuntu bạn vừa lấy được).*
+    *   Giờ đây, bạn có thể truy cập các API Test như `http://api.bookland.local/auth/hello` trực tiếp từ Chrome hoặc Postman ở máy thật Windows!
 
 ---
 
