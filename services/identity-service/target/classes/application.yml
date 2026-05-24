@@ -29,3 +29,9 @@ spring:
 
 jwt:
   signer-key: ${JWT_SIGNER_KEY:1234567890123456789012345678901234567890123456789012345678901234}
+  valid-duration: ${JWT_VALID_DURATION:3600}
+  refreshable-duration: ${JWT_REFRESHABLE_DURATION:604800}
+
+app:
+  services:
+    user: http://${USER_SERVICE_HOST:localhost}:8082

@@ -20,6 +20,9 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "user_id", unique = true)
+    private String userId;
+
     @Column(unique = true, nullable = false)
     private String username;
 
@@ -32,9 +35,6 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(nullable = false)
-    private String password;
-
     @Column(length = 50)
     private String phone;
 
@@ -45,15 +45,6 @@ public class User {
 
     @Column(updatable = false)
     private LocalDateTime createdAt;
-
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "user_role",
-            joinColumns = @JoinColumn(name = "userId"),
-            inverseJoinColumns = @JoinColumn(name = "roleId")
-    )
-    @Builder.Default
-    private Set<Role> roles = new HashSet<>();
 
     @PrePersist
     protected void onCreate() {

@@ -156,6 +156,7 @@ services:
       context: .
       dockerfile: services/api-gateway/Dockerfile
     container_name: api-gateway
+    restart: always
     ports:
       - "8080:8080"
     environment:
@@ -178,6 +179,7 @@ services:
       context: .
       dockerfile: services/identity-service/Dockerfile
     container_name: identity-service
+    restart: always
     ports:
       - "8081:8081"
     environment:
@@ -188,6 +190,7 @@ services:
       - REDIS_PORT=6379
       - REDIS_PASSWORD=bookland123
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=bookland-kafka:29092
+      - USER_SERVICE_HOST=user-service
     depends_on:
       - identity-db
       - redis
@@ -198,6 +201,7 @@ services:
       context: .
       dockerfile: services/user-service/Dockerfile
     container_name: user-service
+    restart: always
     ports:
       - "8082:8082"
     environment:
@@ -215,6 +219,7 @@ services:
       context: .
       dockerfile: services/book-service/Dockerfile
     container_name: book-service
+    restart: always
     ports:
       - "8083:8083"
     environment:
@@ -231,6 +236,7 @@ services:
       context: .
       dockerfile: services/order-service/Dockerfile
     container_name: order-service
+    restart: always
     ports:
       - "8084:8084"
     environment:
@@ -250,6 +256,7 @@ services:
       context: .
       dockerfile: services/event-service/Dockerfile
     container_name: event-service
+    restart: always
     ports:
       - "8085:8085"
     environment:
@@ -265,6 +272,7 @@ services:
       context: .
       dockerfile: services/notification-service/Dockerfile
     container_name: notification-service
+    restart: always
     ports:
       - "8086:8086"
     environment:
@@ -283,6 +291,7 @@ services:
       context: .
       dockerfile: services/file-service/Dockerfile
     container_name: file-service
+    restart: always
     ports:
       - "8087:8087"
     environment:
@@ -298,6 +307,7 @@ services:
       context: .
       dockerfile: services/search-service/Dockerfile
     container_name: search-service
+    restart: always
     ports:
       - "8088:8088"
     environment:

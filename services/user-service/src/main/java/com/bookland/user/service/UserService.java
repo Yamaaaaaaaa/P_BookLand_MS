@@ -1,27 +1,19 @@
 package com.bookland.user.service;
 
-import com.bookland.user.dto.request.*;
-import com.bookland.user.dto.response.UserResponse;
-import com.bookland.user.entity.Role;
+import com.bookland.user.dto.request.ProfileCreationRequest;
+import com.bookland.user.dto.request.UpdateProfileRequest;
+import com.bookland.user.dto.response.UserProfileResponse;
 import com.bookland.user.entity.User;
-import com.bookland.user.entity.User.UserStatus;
 import com.bookland.user.exception.AppException;
 import com.bookland.user.exception.ErrorCode;
-import com.bookland.user.repository.RoleRepository;
 import com.bookland.user.repository.UserRepository;
-import com.bookland.user.repository.specification.UserSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -29,50 +21,9 @@ import java.util.Set;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
-    private final PasswordEncoder passwordEncoder;
-
-    // ===========================
-    // READ
-    // ===========================
-
-    @Transactional(readOnly = true)
-    public Page<UserResponse> getAllUsers(String keyword, UserStatus status, Long roleId, Pageable pageable) {
-        Specification<User> spec = UserSpecification.searchByKeyword(keyword)
-                .and(UserSpecification.hasStatus(status))
-                .and(UserSpecification.hasRole(roleId));
-
-        return userRepository.findAll(spec, pageable)
-                .map(UserResponse::fromEntity);
-    }
-
-    @Transactional(readOnly = true)
-    public UserResponse getUserById(Long id) {
-        User user = userRepository.findByIdWithRoles(id)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        return UserResponse.fromEntity(user);
-    }
-
-    @Transactional(readOnly = true)
-    public UserResponse getUserByEmail(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        return UserResponse.fromEntity(user);
-    }
-
-    @Transactional(readOnly = true)
-    public UserResponse getUserByUsername(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        return UserResponse.fromEntity(user);
-    }
-
-    // ===========================
-    // CREATE
-    // ===========================
 
     @Transactional
-    public UserResponse createUser(UserRequest request) {
+    public UserProfileResponse createProfile(ProfileCreationRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new AppException(ErrorCode.USER_EXISTED);
         }
@@ -80,38 +31,83 @@ public class UserService {
             throw new AppException(ErrorCode.EMAIL_EXISTED);
         }
 
-        Set<Role> roles = new HashSet<>();
-        if (request.getRoleIds() != null && !request.getRoleIds().isEmpty()) {
-            roles = roleRepository.findByIdIn(request.getRoleIds());
-            if (roles.size() != request.getRoleIds().size()) {
-                throw new AppException(ErrorCode.SOME_ROLES_NOT_FOUND);
-            }
-        }
-
         User user = User.builder()
+                .userId(request.getUserId())
                 .username(request.getUsername())
+                .email(request.getEmail())
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .dob(request.getDob())
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
                 .phone(request.getPhone())
                 .status(User.UserStatus.ENABLE)
-                .roles(roles)
                 .build();
 
         User savedUser = userRepository.save(user);
-        log.info("Created new user: {}", savedUser.getUsername());
-        return UserResponse.fromEntity(savedUser);
+        log.info("Created profile for user: {}", savedUser.getUsername());
+        return mapToResponse(savedUser);
     }
 
-    // ===========================
-    // UPDATE
-    // ===========================
+    @Transactional(readOnly = true)
+    public UserProfileResponse getProfile(String id) {
+        User user = userRepository.findByUserId(id)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        return mapToResponse(user);
+    }
+
+    @Transactional(readOnly = true)
+    public UserProfileResponse getByUserId(String userId) {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        return mapToResponse(user);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserProfileResponse> getAllProfiles() {
+        return userRepository.findAll().stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public UserProfileResponse getMyProfile(String userEmail) {
+        if (!StringUtils.hasText(userEmail)) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+        User user = userRepository.findByEmail(userEmail)
+                .orElseGet(() -> userRepository.findByUsername(userEmail)
+                        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED)));
+        return mapToResponse(user);
+    }
 
     @Transactional
-    public UserResponse updateUser(Long id, UserUpdateRequest request) {
-        User user = userRepository.findById(id)
+    public UserProfileResponse updateMyProfile(String userEmail, UpdateProfileRequest request) {
+        if (!StringUtils.hasText(userEmail)) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+        User user = userRepository.findByEmail(userEmail)
+                .orElseGet(() -> userRepository.findByUsername(userEmail)
+                        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED)));
+
+        if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
+            if (userRepository.existsByEmail(request.getEmail())) {
+                throw new AppException(ErrorCode.EMAIL_EXISTED);
+            }
+            user.setEmail(request.getEmail());
+        }
+
+        if (request.getFirstName() != null) user.setFirstName(request.getFirstName());
+        if (request.getLastName() != null) user.setLastName(request.getLastName());
+        if (request.getDob() != null) user.setDob(request.getDob());
+        if (request.getPhone() != null) user.setPhone(request.getPhone());
+
+        User updatedUser = userRepository.save(user);
+        log.info("Updated profile for user: {}", updatedUser.getUsername());
+        return mapToResponse(updatedUser);
+    }
+
+    @Transactional
+    public UserProfileResponse updateProfileByUserId(String userId, UpdateProfileRequest request) {
+        User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
@@ -127,67 +123,20 @@ public class UserService {
         if (request.getPhone() != null) user.setPhone(request.getPhone());
 
         User updatedUser = userRepository.save(user);
-        log.info("Updated user id={}", id);
-        return UserResponse.fromEntity(updatedUser);
+        log.info("Updated profile for user ID {}: {}", userId, updatedUser.getUsername());
+        return mapToResponse(updatedUser);
     }
 
-    @Transactional
-    public UserResponse updateUserRoles(Long id, UpdateRolesRequest request) {
-        User user = userRepository.findByIdWithRoles(id)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
-        Set<Role> newRoles = roleRepository.findByIdIn(request.getRoleIds());
-        if (newRoles.size() != request.getRoleIds().size()) {
-            throw new AppException(ErrorCode.SOME_ROLES_NOT_FOUND);
-        }
-
-        user.setRoles(newRoles);
-        User updatedUser = userRepository.save(user);
-        log.info("Updated roles for user id={}", id);
-        return UserResponse.fromEntity(updatedUser);
-    }
-
-    @Transactional
-    public UserResponse updateUserStatus(Long id, User.UserStatus status) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
-        user.setStatus(status);
-        User updatedUser = userRepository.save(user);
-        log.info("Updated status for user id={} to {}", id, status);
-        return UserResponse.fromEntity(updatedUser);
-    }
-
-    // ===========================
-    // DELETE
-    // ===========================
-
-    @Transactional
-    public void deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new AppException(ErrorCode.USER_NOT_EXISTED);
-        }
-        userRepository.deleteById(id);
-        log.info("Deleted user id={}", id);
-    }
-
-    // ===========================
-    // INTERNAL (called by other services via Feign or internal API)
-    // ===========================
-
-    /**
-     * Kiểm tra user có tồn tại theo email không — dùng cho identity-service.
-     */
-    @Transactional(readOnly = true)
-    public boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
-    }
-
-    /**
-     * Kiểm tra user có tồn tại theo username không — dùng cho identity-service.
-     */
-    @Transactional(readOnly = true)
-    public boolean existsByUsername(String username) {
-        return userRepository.existsByUsername(username);
+    private UserProfileResponse mapToResponse(User user) {
+        return UserProfileResponse.builder()
+                .id(user.getId() != null ? user.getId().toString() : null)
+                .userId(user.getUserId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .dob(user.getDob())
+                .phone(user.getPhone())
+                .build();
     }
 }
