@@ -497,6 +497,7 @@ spec:
       containers:
         - name: minio
           image: minio/minio:latest
+          imagePullPolicy: IfNotPresent
           command:
             - minio
             - server
@@ -657,8 +658,9 @@ kubectl get pods -n bookland -w
 
 #### 🐳 Bước 2: Liên kết Docker máy ảo và Build các Docker Images cục bộ
 
-Để build trực tiếp các ảnh Docker vào Registry nội bộ của Minikube, chạy lệnh:
+Có 2 cách để build và nạp các ảnh Docker vào cụm Minikube (Khuyến khích sử dụng **Cách 2** nếu đường truyền mạng gặp lỗi `TLS handshake timeout` khi kết nối đến Docker Hub từ bên trong cụm):
 
+##### Cách 1: Build trực tiếp vào Docker Daemon của Minikube (Mặc định)
 ```bash
 # 1. Trỏ terminal vào Docker Daemon của Minikube
 eval $(minikube -p minikube docker-env)
@@ -673,6 +675,24 @@ docker build -t bookland/event-service:1.0 -f services/event-service/Dockerfile 
 docker build -t bookland/notification-service:1.0 -f services/notification-service/Dockerfile .
 docker build -t bookland/file-service:1.0 -f services/file-service/Dockerfile .
 docker build -t bookland/search-service:1.0 -f services/search-service/Dockerfile .
+```
+
+##### Cách 2: Build bằng Docker của Ubuntu VM (Host) rồi nạp vào Minikube (Khuyên dùng khi lỗi mạng)
+Nếu gặp lỗi timeout khi chạy Cách 1, hãy hủy liên kết Docker để quay về Docker Daemon của máy Ubuntu Host (có kết nối internet ổn định hơn). Sau đó build ảnh cục bộ rồi nạp trực tiếp vào cụm:
+```bash
+# 1. Hủy liên kết Docker Daemon của Minikube (quay về Docker của Ubuntu Host)
+eval $(minikube -p minikube docker-env --unset)
+
+# 2. Tiến hành build và nạp ảnh Docker vào cụm Minikube
+docker build -t bookland/api-gateway:1.0 -f services/api-gateway/Dockerfile . && minikube image load bookland/api-gateway:1.0
+docker build -t bookland/identity-service:1.0 -f services/identity-service/Dockerfile . && minikube image load bookland/identity-service:1.0
+docker build -t bookland/user-service:1.0 -f services/user-service/Dockerfile . && minikube image load bookland/user-service:1.0
+docker build -t bookland/book-service:1.0 -f services/book-service/Dockerfile . && minikube image load bookland/book-service:1.0
+docker build -t bookland/order-service:1.0 -f services/order-service/Dockerfile . && minikube image load bookland/order-service:1.0
+docker build -t bookland/event-service:1.0 -f services/event-service/Dockerfile . && minikube image load bookland/event-service:1.0
+docker build -t bookland/notification-service:1.0 -f services/notification-service/Dockerfile . && minikube image load bookland/notification-service:1.0
+docker build -t bookland/file-service:1.0 -f services/file-service/Dockerfile . && minikube image load bookland/file-service:1.0
+docker build -t bookland/search-service:1.0 -f services/search-service/Dockerfile . && minikube image load bookland/search-service:1.0
 ```
 
 #### 🚀 Bước 3: Triển khai các dịch vụ nghiệp vụ (Stateless Services)
@@ -701,22 +721,64 @@ kubectl apply -f k8s/03-ingress/
 
 Để máy thật Windows của bạn có thể gọi API trực tiếp vào Kubernetes Cluster trong máy ảo:
 
-1.  **Duy trì Network Tunnel trong máy ảo:**
-    Mở một cửa sổ Terminal mới trong máy ảo Ubuntu (không được đóng) và chạy:
-    ```bash
-    minikube tunnel
-    ```
-2.  **Lấy IP máy ảo Ubuntu:**
-    Chạy lệnh `ip a` trên máy ảo Ubuntu để lấy IP card mạng LAN của máy ảo (ví dụ: card card Host-only/Bridged, thường có dải mạng LAN dạng `192.168.1.50` hoặc `192.168.56.101`).
-3.  **Cấu hình file hosts trên máy thật Windows:**
-    *   Mở **Notepad** dưới quyền quản trị viên (**Run as Administrator**).
-    *   Mở tệp tin tại đường dẫn `C:\Windows\System32\drivers\etc\hosts`.
-    *   Thêm dòng sau vào cuối tệp tin và lưu lại:
-        ```text
-        192.168.1.50  api.bookland.local
-        ```
-        *(Hãy thay thế `192.168.1.50` bằng IP thực tế của máy ảo Ubuntu bạn vừa lấy được).*
-    *   Giờ đây, bạn có thể truy cập các API Test như `http://api.bookland.local/auth/hello` trực tiếp từ Chrome hoặc Postman ở máy thật Windows!
+1. **Duy trì Network Tunnel trong máy ảo:**
+   Mở một cửa sổ Terminal mới trong máy ảo Ubuntu (không được đóng) và chạy:
+   ```bash
+   minikube tunnel
+   ```
+2. **Lấy IP máy ảo Ubuntu:**
+   Chạy lệnh `ip a` trên máy ảo Ubuntu để lấy IP card mạng LAN của máy ảo (ví dụ: card Host-only/Bridged, thường có dải mạng LAN dạng `192.168.1.50` hoặc `192.168.56.101`).
+
+3. **💡 Hướng dẫn cấu hình IP TĨNH (Fix cứng IP) cho máy ảo Ubuntu để không bị đổi sau mỗi lần khởi động:**
+   > [!TIP]
+   > Để tránh việc card mạng (Bridged) bị cấp phát động DHCP đổi IP ngẫu nhiên sau mỗi lần khởi động lại máy ảo (làm bạn phải sửa lại file `hosts` trên Windows liên tục), hãy làm theo các bước chuẩn cấu hình **Netplan** dưới đây:
+   
+   * **Bước 3.1: Xác định tên card mạng cần cấu hình tĩnh**
+     Chạy lệnh `ip a` trên máy ảo Ubuntu và quan sát các interface.
+     * Vì bạn sử dụng **Bridged Mode** làm card mạng chính (vừa cấp mạng Internet và kết nối trực tiếp với máy Windows), card mạng này sẽ là **`enp0s3`** (hoặc tên tương tự hiển thị trong `ip a`).
+   
+   * **Bước 3.2: Cấu hình Netplan**
+     Mở thư mục chứa file cấu hình mạng Netplan:
+     ```bash
+     cd /etc/netplan/
+     ls
+     ```
+     *(Thường sẽ có một file tên là `01-netcfg.yaml`, `50-cloud-init.yaml` hoặc tương tự. Hãy mở file đó bằng quyền root, ví dụ: `sudo nano 50-cloud-init.yaml`)*.
+     
+     Tiến hành khai báo IP tĩnh cho card mạng Bridged **`enp0s3`** với IP tĩnh là **`192.168.2.110`** (như cấu hình bạn đã thiết lập):
+     ```yaml
+     network:
+       version: 2
+       renderer: networkd
+       ethernets:
+         enp0s3:
+            dhcp4: false
+            addresses:
+              - 192.168.2.110/24 # IP tĩnh bạn muốn cố định cho máy ảo
+            routes:
+              - to: default
+                via: 192.168.2.1 # Gateway của router nhà bạn
+            nameservers:
+              addresses: [8.8.8.8, 8.8.4.4] # Dùng 'addresses' (có chữ s) và DNS Google chuẩn
+     ```
+     *Lưu ý quan trọng: File YAML cực kỳ nhạy cảm với khoảng trắng thụt lề (indentation), hãy dùng 2 hoặc 4 dấu cách, không dùng phím Tab.*
+
+   * **Bước 3.3: Áp dụng cấu hình Netplan mới**
+     Lưu file (trong `nano` nhấn `Ctrl + O`, `Enter` rồi `Ctrl + X` để thoát), sau đó chạy lệnh áp dụng:
+     ```bash
+     sudo netplan apply
+     ```
+     Bây giờ, máy ảo Ubuntu của bạn đã được cố định IP tĩnh `192.168.2.110` vĩnh viễn và có mạng internet hoạt động hoàn hảo!
+
+4. **Cấu hình file hosts trên máy thật Windows:**
+   * Mở **Notepad** dưới quyền quản trị viên (**Run as Administrator**).
+   * Mở tệp tin tại đường dẫn `C:\Windows\System32\drivers\etc\hosts`.
+   * Thêm dòng sau vào cuối tệp tin và lưu lại:
+     ```text
+     192.168.2.110  api.bookland.local
+     ```
+     *(Hãy thay thế `192.168.2.110` bằng IP tĩnh thực tế của máy ảo Ubuntu bạn vừa fix cứng ở Bước 3).*
+   * Giờ đây, bạn có thể truy cập các API Test như `http://api.bookland.local/auth/hello` trực tiếp từ Chrome hoặc Postman ở máy thật Windows cực kỳ ổn định mà không lo bị đổi IP!
 
 ---
 
