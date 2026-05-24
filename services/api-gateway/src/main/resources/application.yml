@@ -53,7 +53,15 @@ spring:
         - id: book-service
           uri: http://${BOOK_SERVICE_HOST:localhost}:8083
           predicates:
-            - Path=/api/books/**, /api/authors/**, /api/categories/**, /api/series/**, /api/publishers/**
+            - Path=/api/books/**, /api/authors/**, /api/categories/**, /api/series/**, /api/publishers/**, /api/admin/**
+
+        # Book Service API Docs
+        - id: book-service-api-docs
+          uri: http://${BOOK_SERVICE_HOST:localhost}:8083
+          predicates:
+            - Path=/book-service/v3/api-docs
+          filters:
+            - RewritePath=/book-service/v3/api-docs, /v3/api-docs
 
         # Order Service
         - id: order-service
@@ -105,4 +113,6 @@ springdoc:
         url: /identity-service/v3/api-docs
       - name: User Service
         url: /user-service/v3/api-docs
+      - name: Book Service
+        url: /book-service/v3/api-docs
 
