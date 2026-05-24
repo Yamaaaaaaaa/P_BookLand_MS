@@ -16,7 +16,7 @@ spring:
         - id: identity-service
           uri: http://${IDENTITY_SERVICE_HOST:localhost}:8081
           predicates:
-            - Path=/auth/**, /api/roles/**
+            - Path=/auth/**
           filters:
             - name: RequestRateLimiter
               args:
@@ -27,7 +27,15 @@ spring:
         - id: user-service
           uri: http://${USER_SERVICE_HOST:localhost}:8082
           predicates:
-            - Path=/api/users/**, /api/addresses/**, /api/wishlists/**
+            - Path=/api/users/**, /api/roles/**, /api/addresses/**, /api/wishlists/**
+
+        # User Service API Docs
+        - id: user-service-api-docs
+          uri: http://${USER_SERVICE_HOST:localhost}:8082
+          predicates:
+            - Path=/user-service/v3/api-docs
+          filters:
+            - RewritePath=/user-service/v3/api-docs, /v3/api-docs
 
         # Book Service
         - id: book-service
@@ -74,3 +82,15 @@ resilience4j:
         permittedNumberOfCallsInHalfOpenState: 3
         waitDurationInOpenState: 10s
         failureRateThreshold: 50
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: User Service
+        url: /user-service/v3/api-docs
+      # - name: Identity Service
+      #   url: /identity-service/v3/api-docs
+
