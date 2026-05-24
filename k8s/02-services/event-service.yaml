@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: event-service
+  namespace: bookland
+spec:
+  ports:
+    - port: 8085
+      targetPort: 8085
+  selector:
+    app: event-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: event-service
+  namespace: bookland
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: event-service
+  template:
+    metadata:
+      labels:
+        app: event-service
+    spec:
+      containers:
+        - name: event-service
+          image: bookland/event-service:1.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql:3306/bookland_event?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "root"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "root"
+            - name: SERVICES_ORDER_SERVICE_URL
+              value: "http://order-service:8084"
+          ports:
+            - containerPort: 8085
