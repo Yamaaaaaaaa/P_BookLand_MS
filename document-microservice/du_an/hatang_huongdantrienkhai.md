@@ -717,6 +717,25 @@ Cấu hình Ingress Controller để đón tiếp nhận tên miền `api.bookla
 kubectl apply -f k8s/03-ingress/
 ```
 
+#### 🧪 Bước 4.1: Hướng dẫn Truy cập thử nghiệm tức thì thông qua Localhost (Port-Forward)
+> [!TIP]
+> Nếu bạn muốn kiểm tra nhanh xem toàn bộ hệ thống microservices có hoạt động ổn định và liên kết với nhau thành công hay chưa ngay trên máy ảo Ubuntu **dưới dạng `localhost`** (mà không cần cấu hình file `hosts` tên miền hay chạy Tunnel ở các bước dưới), hãy sử dụng công cụ **`port-forward`** chuyên nghiệp của Kubernetes:
+
+* **Bước 4.1.1: Chạy lệnh chuyển tiếp cổng (Port-Forward)**
+  Mở Terminal trên máy ảo Ubuntu và chạy lệnh sau để ánh xạ cổng `8080` của API Gateway trong cụm K8s ra cổng `8080` của `localhost` máy ảo:
+  ```bash
+  kubectl port-forward service/api-gateway 8080:8080 -n bookland
+  ```
+  *(Lưu ý: Giữ nguyên cửa sổ Terminal này đang chạy để duy trì kết nối).*
+
+* **Bước 4.1.2: Truy cập kiểm tra kết nối**
+  Mở trình duyệt Firefox trên máy ảo Ubuntu (hoặc mở một tab terminal mới chạy `curl`) và truy cập đường dẫn thử nghiệm:
+  ```text
+  http://localhost:8080/api/users/hello
+  ```
+  Nếu nhận được chuỗi phản hồi **`Hello from User Service!`** thì chúc mừng bạn, toàn bộ hệ thống API Gateway và 9 microservices đã hoạt động liên kết với nhau hoàn hảo 100%!
+```
+
 #### 🔌 Bước 5: Cấu hình Ingress & Thông mạng ngoài về Windows Host
 
 Để máy thật Windows của bạn có thể gọi API trực tiếp vào Kubernetes Cluster trong máy ảo:
@@ -828,3 +847,76 @@ Nếu Pod ở trạng thái `CrashLoopBackOff`, `ImagePullBackOff` hoặc `Pendi
 kubectl describe pod <tên-pod-lỗi> -n bookland
 ```
 Hãy xem mục **Events** ở cuối cùng để thấy nguyên nhân cụ thể (ví dụ: Thiếu RAM trên node, lỗi bind PVC, tên Image viết sai...).
+
+---
+
+## 4. Hướng dẫn Khởi động & Phục hồi hệ thống khi mở lại Máy ảo
+
+Mỗi lần bạn tắt máy tính vật lý hoặc khởi động lại máy ảo Ubuntu, toàn bộ cụm Kubernetes Minikube và các kết nối chuyển tiếp (Port-Forward) sẽ bị tạm dừng. Hãy làm theo hướng dẫn dưới đây để kích hoạt lại toàn bộ hệ thống chỉ trong vài giây.
+
+### 4.1 Quy trình thực hiện bằng các câu lệnh thủ công
+Mở Terminal của máy ảo Ubuntu và chạy lần lượt các bước sau:
+
+* **Bước 1: Khởi động lại cụm Minikube**
+  ```bash
+  minikube start
+  ```
+  *(Minikube sẽ tự động khôi phục dải mạng, gắn lại toàn bộ các ổ cứng PVC và kích hoạt lại toàn bộ 14/14 Pod hạ tầng & nghiệp vụ đã deploy từ trước).*
+
+* **Bước 2: Xác minh toàn bộ các Pod đã chuyển sang trạng thái hoạt động**
+  ```bash
+  kubectl get pods -n bookland
+  ```
+  *(Đảm bảo tất cả các Pod đều báo trạng thái `Running` trước khi sang bước tiếp theo).*
+
+* **Bước 3: Kích hoạt lại cổng chuyển tiếp để máy Windows truy cập**
+  ```bash
+  kubectl port-forward --address 0.0.0.0 service/api-gateway 8080:8080 -n bookland
+  ```
+  *(Giữ nguyên Terminal này đang chạy để duy trì đầu cầu kết nối).*
+
+---
+
+### 4.2 Tự động hóa 100% bằng Tập lệnh (Automation Script)
+Để không cần phải nhớ và gõ lại các câu lệnh trên sau mỗi lần bật máy ảo, bạn có thể tạo một file Script tự động hóa như sau:
+
+* **Bước 1: Tạo file script tự động hóa trên máy ảo**
+  Đứng tại thư mục gốc của dự án `/home/vboxuser/P_BookLand_MS`, chạy lệnh:
+  ```bash
+  nano start-bookland.sh
+  ```
+* **Bước 2: Copy và dán nội dung dưới đây vào file:**
+  ```bash
+  #!/bin/bash
+  echo "===================================================================="
+  echo "🚀 ĐANG KHỞI ĐỘNG HỆ THỐNG BOOKLAND MICROSERVICES..."
+  echo "===================================================================="
+
+  # 1. Khởi động Minikube
+  minikube start
+
+  echo "⏳ Đang chờ các dịch vụ ổn định trong 10 giây..."
+  sleep 10
+
+  # 2. Hiển thị danh sách các Pod để kiểm tra trạng thái
+  echo "🔍 DANH SÁCH CÁC POD HIỆN TẠI:"
+  kubectl get pods -n bookland
+
+  # 3. Kích hoạt Port-Forward ra mạng LAN
+  echo "===================================================================="
+  echo "🔌 ĐANG MỞ CỔNG CHUYỂN TIẾP (PORT-FORWARD: 8080) RA MẠNG NGOÀI..."
+  echo "👉 Bạn có thể truy cập từ máy Windows: http://api.bookland.local:8080/api/users/hello"
+  echo "⚠️  Lưu ý: Giữ nguyên Terminal này không được đóng để duy trì kết nối!"
+  echo "===================================================================="
+  
+  kubectl port-forward --address 0.0.0.0 service/api-gateway 8080:8080 -n bookland
+  ```
+* **Bước 3: Cấp quyền thực thi cho file script**
+  ```bash
+  chmod +x start-bookland.sh
+  ```
+
+Từ nay về sau, sau mỗi lần khởi động lại máy ảo, bạn chỉ cần mở terminal lên và gõ duy nhất một dòng lệnh này là toàn bộ hệ thống tự động bật lên và kết nối thông suốt với Windows:
+```bash
+./start-bookland.sh
+```
