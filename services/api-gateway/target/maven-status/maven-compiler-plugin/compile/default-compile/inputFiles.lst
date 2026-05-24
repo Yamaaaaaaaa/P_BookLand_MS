@@ -1,9 +1,0 @@
-D:\Microservices\P_BookLand_MS\services\api-gateway\src\main\java\com\bookland\gateway\dto\ApiResponse.java
-D:\Microservices\P_BookLand_MS\services\api-gateway\src\main\java\com\bookland\gateway\dto\response\IntrospectResponse.java
-D:\Microservices\P_BookLand_MS\services\api-gateway\src\main\java\com\bookland\gateway\config\SwaggerConfig.java
-D:\Microservices\P_BookLand_MS\services\api-gateway\src\main\java\com\bookland\gateway\config\WebClientConfiguration.java
-D:\Microservices\P_BookLand_MS\services\api-gateway\src\main\java\com\bookland\gateway\dto\request\IntrospectRequest.java
-D:\Microservices\P_BookLand_MS\services\api-gateway\src\main\java\com\bookland\gateway\config\AuthenticationFilter.java
-D:\Microservices\P_BookLand_MS\services\api-gateway\src\main\java\com\bookland\gateway\GatewayApplication.java
-D:\Microservices\P_BookLand_MS\services\api-gateway\src\main\java\com\bookland\gateway\repository\IdentityClient.java
-D:\Microservices\P_BookLand_MS\services\api-gateway\src\main\java\com\bookland\gateway\service\IdentityService.java

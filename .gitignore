@@ -1,1 +1,14 @@
 .env
+
+# Maven build output
+target/
+*.jar
+*.war
+*.class
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.suo
+*.user
