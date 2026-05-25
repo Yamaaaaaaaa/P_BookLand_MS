@@ -32,4 +32,13 @@ public class InternalUserController {
                 .result(userService.updateProfileByUserId(userId, request))
                 .build();
     }
+
+    @PutMapping("/internal/users/update-id")
+    public ApiResponse<UserProfileResponse> updateUserIdByEmail(
+            @RequestParam String email,
+            @RequestParam String newUserId) {
+        return ApiResponse.<UserProfileResponse>builder()
+                .result(userService.updateUserIdByEmail(email, newUserId))
+                .build();
+    }
 }

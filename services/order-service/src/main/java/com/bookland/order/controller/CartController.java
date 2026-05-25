@@ -133,7 +133,7 @@ public class CartController {
     @Operation(summary = "Xóa toàn bộ giỏ hàng",
                description = "Xóa hết items nhưng vẫn giữ record cart. Dùng sau khi checkout toàn bộ.")
     public ResponseEntity<ApiResponse<Void>> clearCart(
-            @Parameter(hidden = true) @RequestHeader("X-User-Id") String userId) {
+            @Parameter(hidden = true) @RequestHeader("X-User-Email") String userId) {
         log.info("DELETE /api/carts/my userId={}", userId);
         return ResponseEntity.ok(cartService.clearCart(userId));
     }

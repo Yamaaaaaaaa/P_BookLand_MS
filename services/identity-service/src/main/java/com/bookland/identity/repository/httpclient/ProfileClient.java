@@ -23,4 +23,12 @@ public interface ProfileClient {
 
     @PutMapping(value = "/internal/users/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
     ApiResponse<UserProfileResponse> updateProfile(@PathVariable("userId") String userId, @RequestBody ProfileUpdateRequest request);
+
+    @org.springframework.web.bind.annotation.GetMapping(value = "/users/my-profile", produces = MediaType.APPLICATION_JSON_VALUE)
+    ApiResponse<UserProfileResponse> getProfileByEmail(@org.springframework.web.bind.annotation.RequestHeader("X-User-Email") String email);
+
+    @PutMapping(value = "/internal/users/update-id", produces = MediaType.APPLICATION_JSON_VALUE)
+    ApiResponse<UserProfileResponse> updateUserIdByEmail(
+            @org.springframework.web.bind.annotation.RequestParam("email") String email,
+            @org.springframework.web.bind.annotation.RequestParam("newUserId") String newUserId);
 }

@@ -127,6 +127,16 @@ public class UserService {
         return mapToResponse(updatedUser);
     }
 
+    @Transactional
+    public UserProfileResponse updateUserIdByEmail(String email, String newUserId) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        user.setUserId(newUserId);
+        User saved = userRepository.save(user);
+        log.info("Updated userId for email {}: new userId is {}", email, newUserId);
+        return mapToResponse(saved);
+    }
+
     private UserProfileResponse mapToResponse(User user) {
         return UserProfileResponse.builder()
                 .id(user.getId() != null ? user.getId().toString() : null)

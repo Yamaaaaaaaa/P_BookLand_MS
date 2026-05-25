@@ -29,6 +29,9 @@ public class ApplicationInitConfig {
     @Autowired
     PasswordEncoder passwordEncoder;
 
+    @Autowired
+    com.bookland.identity.repository.httpclient.ProfileClient profileClient;
+
     @NonFinal
     static final String ADMIN_USER_NAME = "admin";
 
@@ -85,6 +88,42 @@ public class ApplicationInitConfig {
                 userRepository.save(user);
                 log.warn("admin user has been created with default password: admin, please change it");
             }
+
+            // Check & update admin user UUID in user-service
+            try {
+                java.util.Optional<User> adminUserOpt = userRepository.findByUsername(ADMIN_USER_NAME);
+                if (adminUserOpt.isPresent()) {
+                    User adminUser = adminUserOpt.get();
+                    try {
+                        com.bookland.identity.dto.request.ApiResponse<com.bookland.identity.dto.response.UserProfileResponse> profileResponse = 
+                                profileClient.getProfileByEmail(adminUser.getEmail());
+                        if (profileResponse != null && profileResponse.getResult() != null) {
+                            com.bookland.identity.dto.response.UserProfileResponse profile = profileResponse.getResult();
+                            if (!adminUser.getId().equals(profile.getUserId())) {
+                                log.info("Admin userId in user-service ({}) does not match identity-service UUID ({}). Updating...",
+                                        profile.getUserId(), adminUser.getId());
+                                profileClient.updateUserIdByEmail(adminUser.getEmail(), adminUser.getId());
+                                log.info("Successfully updated admin userId in user-service.");
+                            } else {
+                                log.info("Admin userId in user-service matches identity-service UUID.");
+                            }
+                        }
+                    } catch (feign.FeignException.NotFound nf) {
+                        log.info("Admin profile not found in user-service. Seeding a new profile...");
+                        profileClient.createProfile(com.bookland.identity.dto.request.ProfileCreationRequest.builder()
+                                .userId(adminUser.getId())
+                                .username(adminUser.getUsername())
+                                .email(adminUser.getEmail())
+                                .firstName("Admin")
+                                .lastName("System")
+                                .build());
+                        log.info("Successfully created admin profile in user-service.");
+                    }
+                }
+            } catch (Exception e) {
+                log.error("Failed to check/update admin user profile in user-service: {}", e.getMessage());
+            }
+
             log.info("Application initialization completed .....");
         };
     }
