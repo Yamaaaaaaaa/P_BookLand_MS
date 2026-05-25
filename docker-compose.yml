@@ -265,6 +265,8 @@ services:
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
       - ORDER_SERVICE_HOST=order-service
+      - USER_SERVICE_HOST=user-service
+      - BOOK_SERVICE_HOST=book-service
     depends_on:
       - event-db
 
@@ -300,6 +302,9 @@ services:
       - MINIO_ACCESS_KEY=bookland
       - MINIO_SECRET_KEY=bookland123
       - MINIO_BUCKET_NAME=bookland
+      - SUPABASE_URL=$SUPABASE_URL
+      - SUPABASE_KEY=$SUPABASE_KEY
+      - SUPABASE_BUCKET=$SUPABASE_BUCKET
     depends_on:
       - minio
 

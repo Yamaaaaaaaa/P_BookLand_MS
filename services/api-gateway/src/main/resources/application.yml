@@ -75,6 +75,14 @@ spring:
           predicates:
             - Path=/api/events/**
 
+        # Event Service API Docs
+        - id: event-service-api-docs
+          uri: http://${EVENT_SERVICE_HOST:localhost}:8085
+          predicates:
+            - Path=/event-service/v3/api-docs
+          filters:
+            - RewritePath=/event-service/v3/api-docs, /v3/api-docs
+
         # Notification Service
         - id: notification-service
           uri: http://${NOTIFICATION_SERVICE_HOST:localhost}:8086
@@ -85,7 +93,15 @@ spring:
         - id: file-service
           uri: http://${FILE_SERVICE_HOST:localhost}:8087
           predicates:
-            - Path=/api/files/**
+            - Path=/api/files/**, /api/uploads/**
+
+        # File Service API Docs
+        - id: file-service-api-docs
+          uri: http://${FILE_SERVICE_HOST:localhost}:8087
+          predicates:
+            - Path=/file-service/v3/api-docs
+          filters:
+            - RewritePath=/file-service/v3/api-docs, /v3/api-docs
 
         # Search Service
         - id: search-service
@@ -125,4 +141,8 @@ springdoc:
         url: /book-service/v3/api-docs
       - name: Search Service
         url: /search-service/v3/api-docs
+      - name: Event Service
+        url: /event-service/v3/api-docs
+      - name: File Service
+        url: /file-service/v3/api-docs
 

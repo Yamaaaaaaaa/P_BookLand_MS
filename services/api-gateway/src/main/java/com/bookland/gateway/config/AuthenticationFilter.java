@@ -45,13 +45,17 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
             "/user-service/v3/api-docs",
             "/book-service/v3/api-docs",
             "/search-service/v3/api-docs",
-            "/api/books/.*",
-            "/api/authors/.*",
-            "/api/categories/.*",
-            "/api/series/.*",
-            "/api/publishers/.*",
-            "/api/files/.*",
-            "/api/search/.*"
+            "/event-service/v3/api-docs",
+            "/file-service/v3/api-docs",
+            // "/api/books/.*",
+            // "/api/authors/.*",
+            // "/api/categories/.*",
+            // "/api/series/.*",
+            // "/api/publishers/.*",
+            // "/api/files/.*",
+            // "/api/search/.*",
+            // "/api/events/.*",
+            // "/api/events"
     };
 
     @Override
