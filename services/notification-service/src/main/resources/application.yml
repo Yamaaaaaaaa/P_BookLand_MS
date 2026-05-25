@@ -20,8 +20,15 @@ spring:
       properties:
         spring.json.trusted.packages: "com.bookland.*"
 
-mail:
-  host: ${SMTP_HOST:smtp.gmail.com}
-  port: ${SMTP_PORT:587}
-  username: ${SMTP_USERNAME:your-email@gmail.com}
-  password: ${SMTP_PASSWORD:your-password}
+  mail:
+    host: ${SMTP_HOST:smtp.gmail.com}
+    port: ${SMTP_PORT:587}
+    username: ${MAIL_USERNAME:pbookland2k4@gmail.com}
+    password: ${MAIL_PASSWORD:fvwl sizc wvwk vlgy}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+

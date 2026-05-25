@@ -89,6 +89,14 @@ spring:
           predicates:
             - Path=/api/notifications/**, /ws/**
 
+        # Notification Service API Docs
+        - id: notification-service-api-docs
+          uri: http://${NOTIFICATION_SERVICE_HOST:localhost}:8086
+          predicates:
+            - Path=/notification-service/v3/api-docs
+          filters:
+            - RewritePath=/notification-service/v3/api-docs, /v3/api-docs
+
         # File Service
         - id: file-service
           uri: http://${FILE_SERVICE_HOST:localhost}:8087
@@ -145,4 +153,6 @@ springdoc:
         url: /event-service/v3/api-docs
       - name: File Service
         url: /file-service/v3/api-docs
+      - name: Notification Service
+        url: /notification-service/v3/api-docs
 
