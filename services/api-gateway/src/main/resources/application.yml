@@ -69,6 +69,14 @@ spring:
           predicates:
             - Path=/api/bills/**, /api/carts/**, /vnpay/**, /api/payment-methods/**, /api/shipping-methods/**
 
+        # Order Service API Docs
+        - id: order-service-api-docs
+          uri: http://${ORDER_SERVICE_HOST:localhost}:8084
+          predicates:
+            - Path=/order-service/v3/api-docs
+          filters:
+            - RewritePath=/order-service/v3/api-docs, /v3/api-docs
+
         # Event Service
         - id: event-service
           uri: http://${EVENT_SERVICE_HOST:localhost}:8085
@@ -155,4 +163,5 @@ springdoc:
         url: /file-service/v3/api-docs
       - name: Notification Service
         url: /notification-service/v3/api-docs
-
+      - name: Order Service
+        url: /order-service/v3/api-docs
