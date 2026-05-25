@@ -41,13 +41,14 @@ public class BookController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "DESC") String sortDirection
+            @RequestParam(defaultValue = "DESC") String sortDirection,
+            @RequestParam(required = false) Boolean dbOnly
     ) {
         Sort.Direction direction = "ASC".equalsIgnoreCase(sortDirection) ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         return ApiResponse.<PageResponse<BookDTO>>builder()
                 .result(bookService.getAllBooks(keyword, status, authorIds, publisherIds,
-                        seriesIds, categoryIds, pinned, minPrice, maxPrice, pageable))
+                        seriesIds, categoryIds, pinned, minPrice, maxPrice, pageable, dbOnly))
                 .build();
     }
 

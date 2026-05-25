@@ -227,6 +227,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=bookland-kafka:29092
+      - SEARCH_SERVICE_HOST=search-service
     depends_on:
       - book-db
       - kafka
@@ -313,6 +314,7 @@ services:
     environment:
       - SPRING_ELASTICSEARCH_URIS=http://bookland-elasticsearch:9200
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=bookland-kafka:29092
+      - BOOK_SERVICE_HOST=book-service
     depends_on:
       - elasticsearch
       - kafka

@@ -10,6 +10,7 @@ import com.bookland.book.exception.ErrorCode;
 import com.bookland.book.repository.*;
 import com.bookland.book.repository.specification.BookSpecification;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -22,19 +23,46 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BookService {
     private final BookRepository bookRepository;
     private final AuthorRepository authorRepository;
     private final PublisherRepository publisherRepository;
     private final SerieRepository serieRepository;
     private final CategoryRepository categoryRepository;
+    private final com.bookland.book.client.SearchClient searchClient;
 
     @Transactional(readOnly = true)
     public PageResponse<BookDTO> getAllBooks(
             String keyword, BookStatus status, List<Long> authorIds,
             List<Long> publisherIds, List<Long> seriesIds, List<Long> categoryIds,
-            Boolean pinned, Double minPrice, Double maxPrice, Pageable pageable) {
+            Boolean pinned, Double minPrice, Double maxPrice, Pageable pageable, Boolean dbOnly) {
 
+        // Try calling search-service via Feign Client for Elasticsearch search
+        if (dbOnly == null || !dbOnly) {
+            try {
+                String sortByField = "id";
+                String sortDirection = "DESC";
+                if (pageable.getSort().isSorted()) {
+                    var order = pageable.getSort().iterator().next();
+                    sortByField = order.getProperty();
+                    sortDirection = order.getDirection().name();
+                }
+
+                log.info("Delegating book search to Elasticsearch via search-service Feign Client...");
+                var feignResponse = searchClient.searchBooks(
+                        keyword, authorIds, publisherIds, seriesIds, categoryIds, minPrice, maxPrice,
+                        pageable.getPageNumber(), pageable.getPageSize(), sortByField, sortDirection
+                );
+                if (feignResponse != null && feignResponse.getResult() != null) {
+                    return feignResponse.getResult();
+                }
+            } catch (Exception e) {
+                log.error("Failed to search books via Elasticsearch, falling back to Database Specification query.", e);
+            }
+        }
+
+        // Database Fallback
         Specification<Book> spec = BookSpecification.searchByKeyword(keyword)
                 .and(BookSpecification.hasStatus(status))
                 .and(BookSpecification.hasAuthors(authorIds))
@@ -96,7 +124,9 @@ public class BookService {
                 .categories(categories)
                 .build();
 
-        return toDTO(bookRepository.save(book));
+        BookDTO savedDto = toDTO(bookRepository.save(book));
+        syncToElasticsearch(savedDto);
+        return savedDto;
     }
 
     @Transactional
@@ -129,7 +159,9 @@ public class BookService {
         book.getCategories().clear();
         book.getCategories().addAll(resolveCategories(request.getCategoryIds()));
 
-        return toDTO(bookRepository.save(book));
+        BookDTO updatedDto = toDTO(bookRepository.save(book));
+        syncToElasticsearch(updatedDto);
+        return updatedDto;
     }
 
     @Transactional
@@ -137,7 +169,9 @@ public class BookService {
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.BOOK_NOT_FOUND));
         book.setStock(quantity);
-        return toDTO(bookRepository.save(book));
+        BookDTO updatedDto = toDTO(bookRepository.save(book));
+        syncToElasticsearch(updatedDto);
+        return updatedDto;
     }
 
     @Transactional
@@ -146,6 +180,25 @@ public class BookService {
             throw new AppException(ErrorCode.BOOK_NOT_FOUND);
         }
         bookRepository.deleteById(id);
+        deleteFromElasticsearch(id);
+    }
+
+    private void syncToElasticsearch(BookDTO dto) {
+        try {
+            searchClient.indexBook(dto);
+            log.info("Successfully synced book ID {} to Elasticsearch.", dto.getId());
+        } catch (Exception e) {
+            log.error("Failed to sync book ID {} to Elasticsearch: {}", dto.getId(), e.getMessage());
+        }
+    }
+
+    private void deleteFromElasticsearch(Long id) {
+        try {
+            searchClient.removeBook(id);
+            log.info("Successfully deleted book ID {} from Elasticsearch.", id);
+        } catch (Exception e) {
+            log.error("Failed to delete book ID {} from Elasticsearch: {}", id, e.getMessage());
+        }
     }
 
     private Set<Category> resolveCategories(Set<Long> categoryIds) {

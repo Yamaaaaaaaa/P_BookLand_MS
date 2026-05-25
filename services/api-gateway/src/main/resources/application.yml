@@ -93,6 +93,14 @@ spring:
           predicates:
             - Path=/api/search/**
 
+        # Search Service API Docs
+        - id: search-service-api-docs
+          uri: http://${SEARCH_SERVICE_HOST:localhost}:8088
+          predicates:
+            - Path=/search-service/v3/api-docs
+          filters:
+            - RewritePath=/search-service/v3/api-docs, /v3/api-docs
+
 resilience4j:
   circuitbreaker:
     instances:
@@ -115,4 +123,6 @@ springdoc:
         url: /user-service/v3/api-docs
       - name: Book Service
         url: /book-service/v3/api-docs
+      - name: Search Service
+        url: /search-service/v3/api-docs
 
