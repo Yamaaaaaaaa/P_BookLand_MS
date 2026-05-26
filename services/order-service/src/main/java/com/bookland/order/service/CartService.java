@@ -40,7 +40,7 @@ public class CartService {
      */
     public ApiResponse<CartDTO> getMyCart(Long userId) {
         log.info("Getting cart for userId={}", userId);
-        Cart cart = cartRepository.findByUserIdAndStatus(userId, CartStatus.BUYING)
+        Cart cart = cartRepository.findFirstByUserIdAndStatusOrderByIdDesc(userId, CartStatus.BUYING)
                 .orElseGet(() -> createNewCart(userId));
         return ApiResponse.<CartDTO>builder()
                 .result(toDTO(cart))
@@ -63,7 +63,7 @@ public class CartService {
             throw new AppException(ErrorCode.BOOK_OUT_OF_STOCK);
         }
 
-        Cart cart = cartRepository.findByUserIdAndStatus(userId, CartStatus.BUYING)
+        Cart cart = cartRepository.findFirstByUserIdAndStatusOrderByIdDesc(userId, CartStatus.BUYING)
                 .orElseGet(() -> createNewCart(userId));
 
         // Nếu sách đã có trong giỏ → cộng số lượng
@@ -102,7 +102,7 @@ public class CartService {
     public ApiResponse<CartDTO> updateCartItem(Long userId, Long bookId, UpdateCartItemRequest request) {
         log.info("updateCartItem userId={} bookId={} qty={}", userId, bookId, request.getQuantity());
 
-        Cart cart = cartRepository.findByUserIdAndStatus(userId, CartStatus.BUYING)
+        Cart cart = cartRepository.findFirstByUserIdAndStatusOrderByIdDesc(userId, CartStatus.BUYING)
                 .orElseThrow(() -> new AppException(ErrorCode.CART_NOT_FOUND));
 
         CartItem cartItem = cartItemRepository.findByCartIdAndBookId(cart.getId(), bookId)
@@ -132,7 +132,7 @@ public class CartService {
     public ApiResponse<CartDTO> removeFromCart(Long userId, Long bookId) {
         log.info("removeFromCart userId={} bookId={}", userId, bookId);
 
-        Cart cart = cartRepository.findByUserIdAndStatus(userId, CartStatus.BUYING)
+        Cart cart = cartRepository.findFirstByUserIdAndStatusOrderByIdDesc(userId, CartStatus.BUYING)
                 .orElseThrow(() -> new AppException(ErrorCode.CART_NOT_FOUND));
 
         CartItem cartItem = cartItemRepository.findByCartIdAndBookId(cart.getId(), bookId)
@@ -156,7 +156,7 @@ public class CartService {
     public ApiResponse<CartDTO> removeMultipleFromCart(Long userId, List<Long> bookIds) {
         log.info("removeMultipleFromCart userId={} bookIds={}", userId, bookIds);
 
-        Cart cart = cartRepository.findByUserIdAndStatus(userId, CartStatus.BUYING)
+        Cart cart = cartRepository.findFirstByUserIdAndStatusOrderByIdDesc(userId, CartStatus.BUYING)
                 .orElseThrow(() -> new AppException(ErrorCode.CART_NOT_FOUND));
 
         List<CartItem> itemsToRemove = cartItemRepository
@@ -180,7 +180,7 @@ public class CartService {
     public ApiResponse<Void> clearCart(Long userId) {
         log.info("clearCart userId={}", userId);
 
-        Cart cart = cartRepository.findByUserIdAndStatus(userId, CartStatus.BUYING)
+        Cart cart = cartRepository.findFirstByUserIdAndStatusOrderByIdDesc(userId, CartStatus.BUYING)
                 .orElseThrow(() -> new AppException(ErrorCode.CART_NOT_FOUND));
 
         cart.getItems().clear();

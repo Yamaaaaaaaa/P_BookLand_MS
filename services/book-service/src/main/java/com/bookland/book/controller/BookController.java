@@ -52,6 +52,29 @@ public class BookController {
                 .build();
     }
 
+    @GetMapping("/search")
+    @Operation(summary = "Tìm kiếm sách qua Elasticsearch (gọi từ FE)")
+    public ApiResponse<PageResponse<BookDTO>> searchBooks(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) List<Long> authorIds,
+            @RequestParam(required = false) List<Long> publisherIds,
+            @RequestParam(required = false) List<Long> seriesIds,
+            @RequestParam(required = false) List<Long> categoryIds,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDirection
+    ) {
+        Sort.Direction direction = "ASC".equalsIgnoreCase(sortDirection) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        return ApiResponse.<PageResponse<BookDTO>>builder()
+                .result(bookService.getAllBooks(keyword, null, authorIds, publisherIds,
+                        seriesIds, categoryIds, null, minPrice, maxPrice, pageable, null))
+                .build();
+    }
+
     @GetMapping("/best-sellers")
     @Operation(summary = "Lấy sách bán chạy")
     public ApiResponse<PageResponse<BookDTO>> getBestSellingBooks(

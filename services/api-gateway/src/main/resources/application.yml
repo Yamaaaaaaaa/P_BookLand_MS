@@ -76,7 +76,7 @@ spring:
         - id: order-service
           uri: http://${ORDER_SERVICE_HOST:localhost}:8084
           predicates:
-            - Path=/api/bills/**, /api/carts/**, /vnpay/**, /api/payment-methods/**, /api/shipping-methods/**
+            - Path=/api/bills/**, /api/carts/**, /api/cart/**, /vnpay/**, /api/payment-methods/**, /api/shipping-methods/**
 
         # Order Service API Docs
         - id: order-service-api-docs
