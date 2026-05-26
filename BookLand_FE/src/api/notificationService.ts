@@ -22,7 +22,7 @@ export interface PageResponse<T> {
 const notificationService = {
     getNotifications: async (userId: number, page: number = 0, size: number = 10) => {
         const response = await axiosClient.get<ApiResponse<PageResponse<Notification>>>(
-            `/notifications/user/${userId}`,
+            `/api/notifications/user/${userId}`,
             { params: { page, size } }
         );
         return (response as any);
@@ -30,28 +30,28 @@ const notificationService = {
 
     getUnreadCount: async (userId: number) => {
         const response = await axiosClient.get<ApiResponse<number>>(
-            `/notifications/user/${userId}/unread-count`
+            `/api/notifications/user/${userId}/unread-count`
         );
         return (response as any);
     },
 
     markAsRead: async (id: number) => {
-        const response = await axiosClient.put<ApiResponse<void>>(`/notifications/${id}/read`);
+        const response = await axiosClient.put<ApiResponse<void>>(`/api/notifications/${id}/read`);
         return (response as any);
     },
 
     markAllAsRead: async (userId: number) => {
-        const response = await axiosClient.put<ApiResponse<void>>(`/notifications/user/${userId}/read-all`);
+        const response = await axiosClient.put<ApiResponse<void>>(`/api/notifications/user/${userId}/read-all`);
         return (response as any);
     },
 
     deleteNotification: async (id: number) => {
-        const response = await axiosClient.delete<ApiResponse<void>>(`/notifications/${id}`);
+        const response = await axiosClient.delete<ApiResponse<void>>(`/api/notifications/${id}`);
         return (response as any);
     },
 
     deleteAllReadNotifications: async (userId: number) => {
-        const response = await axiosClient.delete<ApiResponse<void>>(`/notifications/user/${userId}/read`);
+        const response = await axiosClient.delete<ApiResponse<void>>(`/api/notifications/user/${userId}/read`);
         return (response as any);
     }
 };
