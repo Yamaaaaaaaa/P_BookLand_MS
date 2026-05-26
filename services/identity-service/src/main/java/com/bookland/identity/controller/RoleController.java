@@ -32,6 +32,7 @@ public class RoleController {
                 .build();
     }
 
+
     @GetMapping("/{name}")
     @Operation(summary = "Lấy chi tiết vai trò", description = "Lấy thông tin chi tiết của một vai trò theo tên")
     public ApiResponse<RoleResponse> getRoleByName(@PathVariable String name) {
