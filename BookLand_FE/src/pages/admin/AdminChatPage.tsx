@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Search, MessageCircle } from 'lucide-react';
-import { useWebSocket } from '../../context/WebSocketContext';
+import { useChatWebSocket } from '../../context/ChatWebSocketContext';
 import chatService from '../../api/chatService';
 import type { ChatMessage, ConversationUser } from '../../types/Chat';
 import '../../styles/pages/admin-chat.css';
@@ -15,7 +15,7 @@ const AdminChatPage: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const { subscribe, isConnected } = useWebSocket();
+    const { subscribe, isConnected } = useChatWebSocket();
 
     // Load conversations on mount
     useEffect(() => {
@@ -98,12 +98,11 @@ const AdminChatPage: React.FC = () => {
         if (!newMessage.trim() || !selectedUser) return;
 
         try {
-            const response = await chatService.sendMessage({
+            await chatService.sendMessage({
                 toEmail: selectedUser.email,
                 content: newMessage.trim()
             });
-
-            setMessages(prev => [...prev, response.result]);
+            // Không tự add vào state - WebSocket sẽ push về cho cả người gửi và người nhận
             setNewMessage('');
         } catch (error) {
             console.error('Failed to send message:', error);

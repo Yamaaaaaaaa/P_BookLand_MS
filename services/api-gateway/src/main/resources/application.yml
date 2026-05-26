@@ -107,6 +107,12 @@ spring:
           predicates:
             - Path=/api/notifications/**, /ws/**
 
+        # Chat Service WebSocket (tách riêng khỏi notification-service)
+        - id: chat-service-ws
+          uri: http://${CHAT_SERVICE_HOST:localhost}:8089
+          predicates:
+            - Path=/chat-ws/**
+
         # Notification Service API Docs
         - id: notification-service-api-docs
           uri: http://${NOTIFICATION_SERVICE_HOST:localhost}:8086

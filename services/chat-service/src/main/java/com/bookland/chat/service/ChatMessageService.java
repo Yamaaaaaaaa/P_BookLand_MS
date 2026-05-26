@@ -13,6 +13,7 @@ import com.bookland.chat.repository.ChatMessageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +29,7 @@ public class ChatMessageService {
     private final ChatMessageRepository chatMessageRepository;
     private final UserClient userClient;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional(readOnly = true)
     public List<ChatMessageResponse> getChatHistory(Long currentUserId, Long otherUserId) {
@@ -107,30 +109,24 @@ public class ChatMessageService {
         ChatMessage saved = chatMessageRepository.save(chatMessage);
         ChatMessageResponse response = convertToResponse(saved, fromUser, toUser);
 
-        // 4. Publish ChatEvent to Kafka topic 'chat-events'
-        log.info("Publishing ChatEvent via Kafka to topic 'chat-events' from {} to {}", fromUser.getEmail(), toUser.getEmail());
+        // 4. Push chat message trực tiếp qua WebSocket của chat-service
+        log.info("Pushing ChatMessage via WebSocket (chat-service) from {} to {}", fromUser.getEmail(), toUser.getEmail());
         try {
-            ChatEvent event = ChatEvent.builder()
-                    .id(response.getId())
-                    .fromUserId(response.getFromUserId())
-                    .fromUsername(response.getFromUsername())
-                    .fromEmail(response.getFromEmail())
-                    .toUserId(response.getToUserId())
-                    .toUsername(response.getToUsername())
-                    .toEmail(response.getToEmail())
-                    .content(response.getContent())
-                    .isRead(response.getIsRead())
-                    .createdAt(response.getCreatedAt())
-                    .sessionId(response.getSessionId())
-                    .role(response.getRole())
-                    .contentType(response.getContentType())
-                    .aiConfidence(response.getAiConfidence())
-                    .metadata(response.getMetadata())
-                    .build();
-
-            kafkaTemplate.send("chat-events", event);
+            // Gửi đến người nhận (toUser)
+            messagingTemplate.convertAndSendToUser(
+                    toUser.getEmail(),
+                    "/queue/chat",
+                    response
+            );
+            // Gửi về cho người gửi (fromUser) để hiển thị tin nhắn của chính họ
+            messagingTemplate.convertAndSendToUser(
+                    fromUser.getEmail(),
+                    "/queue/chat",
+                    response
+            );
+            log.info("Chat message pushed via WebSocket to {} and {}", toUser.getEmail(), fromUser.getEmail());
         } catch (Exception e) {
-            log.error("Failed to publish ChatEvent to Kafka topic", e);
+            log.error("Failed to push chat message via WebSocket", e);
         }
 
         return response;

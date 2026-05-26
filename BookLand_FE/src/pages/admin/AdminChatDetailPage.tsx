@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Send, ArrowLeft, MessageCircle } from 'lucide-react';
-import { useWebSocket } from '../../context/WebSocketContext';
+import { useChatWebSocket } from '../../context/ChatWebSocketContext';
 import chatService from '../../api/chatService';
 import type { ChatMessage, ConversationUser } from '../../types/Chat';
 import '../../styles/pages/admin-chat-detail.css';
@@ -16,7 +16,7 @@ const AdminChatDetailPage: React.FC = () => {
     const [newMessage, setNewMessage] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const { subscribe, isConnected } = useWebSocket();
+    const { subscribe, isConnected } = useChatWebSocket();
 
     // Load user info and chat history
     useEffect(() => {
@@ -100,15 +100,12 @@ const AdminChatDetailPage: React.FC = () => {
         if (!newMessage.trim() || !userInfo) return;
 
         try {
-            const response = await chatService.sendMessage({
+            await chatService.sendMessage({
                 toEmail: userInfo.email,
                 content: newMessage.trim()
             });
-
-            if (response.code === 1000) {
-                setMessages(prev => [...prev, response.result]);
-                setNewMessage('');
-            }
+            // Không tự add vào state - WebSocket sẽ push về cho cả người gửi và người nhận
+            setNewMessage('');
         } catch (error) {
             console.error('Failed to send message:', error);
         }
