@@ -323,6 +323,7 @@ public class AuthenticationService{
                 )
                 .jwtID(UUID.randomUUID().toString())
                 .claim("type", tokenType.name())
+                .claim("userId", user.getId())
                 .claim("scope", tokenType == TokenType.ACCESS ? buildScope(user) : null)
                 .build();
 

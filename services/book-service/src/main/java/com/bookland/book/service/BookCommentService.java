@@ -47,7 +47,7 @@ public class BookCommentService {
 
         // 3. Verify user purchased the book via Feign order-service client
         try {
-            ApiResponse<Boolean> verifyRes = orderClient.verifyPurchase(String.valueOf(userId), book.getId());
+            ApiResponse<Boolean> verifyRes = orderClient.verifyPurchase(userId, book.getId());
             if (verifyRes == null || !Boolean.TRUE.equals(verifyRes.getResult())) {
                 throw new AppException(ErrorCode.BOOK_NOT_PURCHASED);
             }
@@ -62,7 +62,7 @@ public class BookCommentService {
         String userName = "Người dùng";
         String userAvatar = "";
         try {
-            ApiResponse<UserProfileResponse> profileRes = userClient.getProfile(String.valueOf(userId));
+            ApiResponse<UserProfileResponse> profileRes = userClient.getProfile(userId);
             if (profileRes != null && profileRes.getResult() != null) {
                 UserProfileResponse profile = profileRes.getResult();
                 userName = profile.getUsername() != null ? profile.getUsername() 

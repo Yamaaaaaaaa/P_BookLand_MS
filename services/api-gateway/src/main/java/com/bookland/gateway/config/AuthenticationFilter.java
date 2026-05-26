@@ -88,10 +88,12 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
                         JsonNode jwtPayload = objectMapper.readTree(payload);
                         String email = jwtPayload.has("sub") ? jwtPayload.get("sub").asText() : "";
                         String scope = jwtPayload.has("scope") ? jwtPayload.get("scope").asText() : "";
+                        String userId = jwtPayload.has("userId") ? jwtPayload.get("userId").asText() : "";
 
                         ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
                                 .header("X-User-Email", email)
                                 .header("X-User-Roles", scope)
+                                .header("X-User-Id", userId)
                                 .build();
                         return chain.filter(exchange.mutate().request(mutatedRequest).build());
                     }

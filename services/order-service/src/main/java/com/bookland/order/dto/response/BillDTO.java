@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 public class BillDTO {
     private Long id;
-    private String userId; // user's email
+    private Long userId; // Long id của user
     private String userName;
     private Long paymentMethodId;
     private String paymentMethodName;

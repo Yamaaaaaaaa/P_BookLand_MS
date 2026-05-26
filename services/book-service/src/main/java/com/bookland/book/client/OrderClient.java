@@ -9,5 +9,5 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface OrderClient {
 
     @GetMapping("/api/bills/internal/verify-purchase")
-    ApiResponse<Boolean> verifyPurchase(@RequestParam("userId") String userId, @RequestParam("bookId") Long bookId);
+    ApiResponse<Boolean> verifyPurchase(@RequestParam("userId") Long userId, @RequestParam("bookId") Long bookId);
 }

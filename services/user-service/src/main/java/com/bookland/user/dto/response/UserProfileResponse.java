@@ -10,8 +10,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserProfileResponse {
-    String id;
-    String userId;
+    Long id;      // identity-service PK, unified user ID
     String username;
     String email;
     String firstName;

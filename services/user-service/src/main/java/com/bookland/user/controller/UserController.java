@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import org.springframework.web.bind.annotation.RequestHeader;
 
 @RestController
 @RequestMapping("/users")
@@ -17,10 +16,14 @@ public class UserController {
 
     private final UserService userService;
 
-    @GetMapping("/{userId}")
-    public ApiResponse<UserProfileResponse> getUser(@PathVariable String userId) {
+    /**
+     * GET /users/{id}
+     * Lấy profile theo Long id (identity-service PK).
+     */
+    @GetMapping("/{id}")
+    public ApiResponse<UserProfileResponse> getUser(@PathVariable Long id) {
         return ApiResponse.<UserProfileResponse>builder()
-                .result(userService.getProfile(userId))
+                .result(userService.getUserById(id))
                 .build();
     }
 
@@ -31,6 +34,10 @@ public class UserController {
                 .build();
     }
 
+    /**
+     * GET /users/my-profile
+     * Lấy profile của user hiện tại dựa trên X-User-Email từ gateway.
+     */
     @GetMapping("/my-profile")
     public ApiResponse<UserProfileResponse> getMyProfile(
             @RequestHeader(value = "X-User-Email", required = false) String userEmail) {
@@ -39,6 +46,10 @@ public class UserController {
                 .build();
     }
 
+    /**
+     * PUT /users/my-profile
+     * Cập nhật profile của user hiện tại.
+     */
     @PutMapping("/my-profile")
     public ApiResponse<UserProfileResponse> updateMyProfile(
             @RequestHeader(value = "X-User-Email", required = false) String userEmail,

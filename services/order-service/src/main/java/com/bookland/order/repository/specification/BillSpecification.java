@@ -7,9 +7,9 @@ import java.time.LocalDateTime;
 
 public class BillSpecification {
 
-    public static Specification<Bill> hasUser(String userId) {
+    public static Specification<Bill> hasUser(Long userId) {
         return (root, query, cb) -> {
-            if (userId == null || userId.trim().isEmpty()) {
+            if (userId == null) {
                 return cb.conjunction();
             }
             return cb.equal(root.get("userId"), userId);

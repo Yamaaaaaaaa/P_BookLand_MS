@@ -32,16 +32,15 @@ public class BookCommentController {
     @PostMapping
     @Operation(summary = "Đăng bình luận & đánh giá mới cho sách (Yêu cầu đã mua hàng)")
     public ResponseEntity<ApiResponse<BookCommentResponse>> createComment(
-            @RequestHeader(value = "X-User-Id", required = false) String userIdStr,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @RequestHeader(value = "X-User-Email", required = false) String email,
             @RequestBody @Valid BookCommentRequest request
     ) {
-        log.info("POST /book-comments by userId={}, email={}", userIdStr, email);
+        log.info("POST /book-comments by userId={}, email={}", userId, email);
 
-        if (userIdStr == null || userIdStr.isEmpty()) {
+        if (userId == null) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
-        Long userId = Long.valueOf(userIdStr);
 
         BookCommentResponse response = bookCommentService.createComment(userId, email, request);
         return ResponseEntity.ok(ApiResponse.<BookCommentResponse>builder()
@@ -78,15 +77,14 @@ public class BookCommentController {
     @Operation(summary = "Xóa bình luận & đánh giá (Chính chủ)")
     public ResponseEntity<ApiResponse<Void>> deleteComment(
             @PathVariable Long commentId,
-            @RequestHeader(value = "X-User-Id", required = false) String userIdStr,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @RequestHeader(value = "X-User-Roles", required = false) String roles
     ) {
-        log.info("DELETE /book-comments/{} by userId={}", commentId, userIdStr);
+        log.info("DELETE /book-comments/{} by userId={}", commentId, userId);
 
-        if (userIdStr == null || userIdStr.isEmpty()) {
+        if (userId == null) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
-        Long userId = Long.valueOf(userIdStr);
 
         bookCommentService.deleteComment(commentId, userId, roles);
         return ResponseEntity.ok(ApiResponse.<Void>builder()
@@ -98,15 +96,14 @@ public class BookCommentController {
     @Operation(summary = "Xóa bình luận & đánh giá (Admin)")
     public ResponseEntity<ApiResponse<Void>> deleteCommentAdmin(
             @PathVariable Long commentId,
-            @RequestHeader(value = "X-User-Id", required = false) String userIdStr,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @RequestHeader(value = "X-User-Roles", required = false) String roles
     ) {
-        log.info("DELETE /book-comments/admin/{} by userId={}", commentId, userIdStr);
+        log.info("DELETE /book-comments/admin/{} by userId={}", commentId, userId);
 
-        if (userIdStr == null || userIdStr.isEmpty()) {
+        if (userId == null) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
-        Long userId = Long.valueOf(userIdStr);
 
         bookCommentService.deleteComment(commentId, userId, roles);
         return ResponseEntity.ok(ApiResponse.<Void>builder()

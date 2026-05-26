@@ -22,6 +22,10 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+    /**
+     * Được gọi từ identity-service sau khi đăng ký thành công.
+     * userId trong request chính là Long id từ identity-service.
+     */
     @Transactional
     public UserProfileResponse createProfile(ProfileCreationRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
@@ -31,8 +35,9 @@ public class UserService {
             throw new AppException(ErrorCode.EMAIL_EXISTED);
         }
 
+        // userId từ identity-service chính là Long id, ta lưu làm PK luôn
         User user = User.builder()
-                .userId(request.getUserId())
+                .id(request.getUserId())  // identity-service Long id → user-service Long id
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .firstName(request.getFirstName())
@@ -47,16 +52,12 @@ public class UserService {
         return mapToResponse(savedUser);
     }
 
+    /**
+     * Lấy profile theo Long id (identity-service PK).
+     */
     @Transactional(readOnly = true)
-    public UserProfileResponse getProfile(String id) {
-        User user = userRepository.findByUserId(id)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        return mapToResponse(user);
-    }
-
-    @Transactional(readOnly = true)
-    public UserProfileResponse getByUserId(String userId) {
-        User user = userRepository.findByUserId(userId)
+    public UserProfileResponse getUserById(Long id) {
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         return mapToResponse(user);
     }
@@ -68,6 +69,9 @@ public class UserService {
                 .toList();
     }
 
+    /**
+     * Lấy profile của chính mình qua email (từ header X-User-Email).
+     */
     @Transactional(readOnly = true)
     public UserProfileResponse getMyProfile(String userEmail) {
         if (!StringUtils.hasText(userEmail)) {
@@ -79,6 +83,9 @@ public class UserService {
         return mapToResponse(user);
     }
 
+    /**
+     * Cập nhật profile của chính mình qua email.
+     */
     @Transactional
     public UserProfileResponse updateMyProfile(String userEmail, UpdateProfileRequest request) {
         if (!StringUtils.hasText(userEmail)) {
@@ -105,9 +112,12 @@ public class UserService {
         return mapToResponse(updatedUser);
     }
 
+    /**
+     * Cập nhật profile theo Long userId (internal, dùng bởi identity-service nếu cần).
+     */
     @Transactional
-    public UserProfileResponse updateProfileByUserId(String userId, UpdateProfileRequest request) {
-        User user = userRepository.findByUserId(userId)
+    public UserProfileResponse updateProfileById(Long userId, UpdateProfileRequest request) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
@@ -127,20 +137,9 @@ public class UserService {
         return mapToResponse(updatedUser);
     }
 
-    @Transactional
-    public UserProfileResponse updateUserIdByEmail(String email, String newUserId) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        user.setUserId(newUserId);
-        User saved = userRepository.save(user);
-        log.info("Updated userId for email {}: new userId is {}", email, newUserId);
-        return mapToResponse(saved);
-    }
-
     private UserProfileResponse mapToResponse(User user) {
         return UserProfileResponse.builder()
-                .id(user.getId() != null ? user.getId().toString() : null)
-                .userId(user.getUserId())
+                .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .firstName(user.getFirstName())

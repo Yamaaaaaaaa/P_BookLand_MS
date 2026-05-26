@@ -9,8 +9,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserProfileResponse {
-    private String id;
-    private String userId;
+    private Long id;       // identity-service PK, unified user ID
     private String username;
     private String email;
     private String firstName;

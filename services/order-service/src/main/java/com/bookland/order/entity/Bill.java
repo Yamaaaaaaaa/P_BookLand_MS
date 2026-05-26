@@ -21,7 +21,7 @@ public class Bill {
     private Long id;
 
     @Column(name = "user_id", nullable = false)
-    private String userId; // maps to user's email injected from gateway X-User-Email
+    private Long userId; // Long id từ identity-service, inject qua header X-User-Id
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "payment_method_id", nullable = false)

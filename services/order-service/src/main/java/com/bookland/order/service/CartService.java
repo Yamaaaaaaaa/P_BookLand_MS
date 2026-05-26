@@ -1,14 +1,12 @@
 package com.bookland.order.service;
 
 import com.bookland.order.client.BookClient;
-import com.bookland.order.client.UserClient;
 import com.bookland.order.dto.request.AddToCartRequest;
 import com.bookland.order.dto.request.UpdateCartItemRequest;
 import com.bookland.order.dto.response.ApiResponse;
 import com.bookland.order.dto.response.BookResponse;
 import com.bookland.order.dto.response.CartDTO;
 import com.bookland.order.dto.response.CartItemDTO;
-import com.bookland.order.dto.response.UserProfileResponse;
 import com.bookland.order.entity.Cart;
 import com.bookland.order.entity.Cart.CartStatus;
 import com.bookland.order.entity.CartItem;
@@ -31,21 +29,19 @@ public class CartService {
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final BookClient bookClient;
-    private final UserClient userClient;
 
     // ──────────────────────────────────────────────────────────────────────────
     // GET CART
     // ──────────────────────────────────────────────────────────────────────────
 
     /**
-     * Lấy giỏ hàng đang BUYING của userId.
+     * Lấy giỏ hàng đang BUYING của userId (Long).
      * Nếu chưa có, tự động tạo mới.
      */
-    public ApiResponse<CartDTO> getMyCart(String userId) {
+    public ApiResponse<CartDTO> getMyCart(Long userId) {
         log.info("Getting cart for userId={}", userId);
-        String resolvedUserId = resolveUserIdByEmail(userId);
-        Cart cart = cartRepository.findByUserIdAndStatus(resolvedUserId, CartStatus.BUYING)
-                .orElseGet(() -> createNewCart(resolvedUserId));
+        Cart cart = cartRepository.findByUserIdAndStatus(userId, CartStatus.BUYING)
+                .orElseGet(() -> createNewCart(userId));
         return ApiResponse.<CartDTO>builder()
                 .result(toDTO(cart))
                 .build();
@@ -56,9 +52,8 @@ public class CartService {
     // ──────────────────────────────────────────────────────────────────────────
 
     @Transactional
-    public ApiResponse<CartDTO> addToCart(String userId, AddToCartRequest request) {
+    public ApiResponse<CartDTO> addToCart(Long userId, AddToCartRequest request) {
         log.info("addToCart userId={} bookId={} qty={}", userId, request.getBookId(), request.getQuantity());
-        String resolvedUserId = resolveUserIdByEmail(userId);
 
         // Lấy thông tin sách từ book-service
         BookResponse book = fetchBook(request.getBookId());
@@ -68,8 +63,8 @@ public class CartService {
             throw new AppException(ErrorCode.BOOK_OUT_OF_STOCK);
         }
 
-        Cart cart = cartRepository.findByUserIdAndStatus(resolvedUserId, CartStatus.BUYING)
-                .orElseGet(() -> createNewCart(resolvedUserId));
+        Cart cart = cartRepository.findByUserIdAndStatus(userId, CartStatus.BUYING)
+                .orElseGet(() -> createNewCart(userId));
 
         // Nếu sách đã có trong giỏ → cộng số lượng
         CartItem existingItem = cartItemRepository
@@ -104,11 +99,10 @@ public class CartService {
     // ──────────────────────────────────────────────────────────────────────────
 
     @Transactional
-    public ApiResponse<CartDTO> updateCartItem(String userId, Long bookId, UpdateCartItemRequest request) {
+    public ApiResponse<CartDTO> updateCartItem(Long userId, Long bookId, UpdateCartItemRequest request) {
         log.info("updateCartItem userId={} bookId={} qty={}", userId, bookId, request.getQuantity());
-        String resolvedUserId = resolveUserIdByEmail(userId);
 
-        Cart cart = cartRepository.findByUserIdAndStatus(resolvedUserId, CartStatus.BUYING)
+        Cart cart = cartRepository.findByUserIdAndStatus(userId, CartStatus.BUYING)
                 .orElseThrow(() -> new AppException(ErrorCode.CART_NOT_FOUND));
 
         CartItem cartItem = cartItemRepository.findByCartIdAndBookId(cart.getId(), bookId)
@@ -135,11 +129,10 @@ public class CartService {
     // ──────────────────────────────────────────────────────────────────────────
 
     @Transactional
-    public ApiResponse<CartDTO> removeFromCart(String userId, Long bookId) {
+    public ApiResponse<CartDTO> removeFromCart(Long userId, Long bookId) {
         log.info("removeFromCart userId={} bookId={}", userId, bookId);
-        String resolvedUserId = resolveUserIdByEmail(userId);
 
-        Cart cart = cartRepository.findByUserIdAndStatus(resolvedUserId, CartStatus.BUYING)
+        Cart cart = cartRepository.findByUserIdAndStatus(userId, CartStatus.BUYING)
                 .orElseThrow(() -> new AppException(ErrorCode.CART_NOT_FOUND));
 
         CartItem cartItem = cartItemRepository.findByCartIdAndBookId(cart.getId(), bookId)
@@ -156,15 +149,14 @@ public class CartService {
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    // REMOVE MULTIPLE ITEMS (Batch) — dùng khi checkout một số sản phẩm
+    // REMOVE MULTIPLE ITEMS (Batch)
     // ──────────────────────────────────────────────────────────────────────────
 
     @Transactional
-    public ApiResponse<CartDTO> removeMultipleFromCart(String userId, List<Long> bookIds) {
+    public ApiResponse<CartDTO> removeMultipleFromCart(Long userId, List<Long> bookIds) {
         log.info("removeMultipleFromCart userId={} bookIds={}", userId, bookIds);
-        String resolvedUserId = resolveUserIdByEmail(userId);
 
-        Cart cart = cartRepository.findByUserIdAndStatus(resolvedUserId, CartStatus.BUYING)
+        Cart cart = cartRepository.findByUserIdAndStatus(userId, CartStatus.BUYING)
                 .orElseThrow(() -> new AppException(ErrorCode.CART_NOT_FOUND));
 
         List<CartItem> itemsToRemove = cartItemRepository
@@ -185,11 +177,10 @@ public class CartService {
     // ──────────────────────────────────────────────────────────────────────────
 
     @Transactional
-    public ApiResponse<Void> clearCart(String userId) {
+    public ApiResponse<Void> clearCart(Long userId) {
         log.info("clearCart userId={}", userId);
-        String resolvedUserId = resolveUserIdByEmail(userId);
 
-        Cart cart = cartRepository.findByUserIdAndStatus(resolvedUserId, CartStatus.BUYING)
+        Cart cart = cartRepository.findByUserIdAndStatus(userId, CartStatus.BUYING)
                 .orElseThrow(() -> new AppException(ErrorCode.CART_NOT_FOUND));
 
         cart.getItems().clear();
@@ -204,7 +195,7 @@ public class CartService {
     // PRIVATE HELPERS
     // ──────────────────────────────────────────────────────────────────────────
 
-    private Cart createNewCart(String userId) {
+    private Cart createNewCart(Long userId) {
         log.info("Creating new cart for userId={}", userId);
         Cart cart = Cart.builder()
                 .userId(userId)
@@ -230,7 +221,6 @@ public class CartService {
 
     /**
      * Chuyển Cart entity → CartDTO, enrich từng item với thông tin sách từ book-service.
-     * Nếu book-service lỗi, vẫn trả item với thông tin tối thiểu (bookId, quantity).
      */
     private CartDTO toDTO(Cart cart) {
         List<CartItemDTO> itemDTOs = cart.getItems().stream()
@@ -275,25 +265,10 @@ public class CartService {
                     .availableStock(book.getStock())
                     .subtotal(finalPrice * item.getQuantity());
         } catch (Exception e) {
-            // Graceful degradation: book-service tạm lỗi, vẫn trả về item với bookId
             log.warn("Could not enrich cart item bookId={}: {}", item.getBookId(), e.getMessage());
             builder.bookName("Không thể tải thông tin sách").subtotal(0.0);
         }
 
         return builder.build();
-    }
-
-    private String resolveUserIdByEmail(String email) {
-        try {
-            ApiResponse<UserProfileResponse> response = userClient.getMyProfile(email);
-            if (response != null && response.getResult() != null) {
-                UserProfileResponse profile = response.getResult();
-                return profile.getUserId() != null ? profile.getUserId() : profile.getId();
-            }
-        } catch (Exception e) {
-            log.error("Failed to resolve user ID for email: {}", email, e);
-            throw new AppException(ErrorCode.UNAUTHENTICATED);
-        }
-        throw new AppException(ErrorCode.UNAUTHENTICATED);
     }
 }

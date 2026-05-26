@@ -20,9 +20,9 @@ public class Cart {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** ID của user lấy từ header X-User-Id do api-gateway inject */
+    /** Long ID của user lấy từ header X-User-Id do api-gateway inject (= identity-service PK) */
     @Column(nullable = false)
-    private String userId;
+    private Long userId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

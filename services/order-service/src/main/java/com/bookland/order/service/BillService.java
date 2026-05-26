@@ -54,13 +54,13 @@ public class BillService {
     private final NotificationProducer notificationProducer;
 
     @Transactional(readOnly = true)
-    public Page<BillDTO> getAllBills(String userId, BillStatus status,
+    public Page<BillDTO> getAllBills(Long userId, BillStatus status,
                                      LocalDateTime fromDate, LocalDateTime toDate,
                                      Double minCost, Double maxCost,
                                      Pageable pageable) {
         Specification<Bill> spec = Specification.where(null);
 
-        if (userId != null && !userId.trim().isEmpty()) {
+        if (userId != null) {
             spec = spec.and(BillSpecification.hasUser(userId));
         }
 
@@ -80,12 +80,11 @@ public class BillService {
     }
 
     @Transactional(readOnly = true)
-    public Page<BillDTO> getOwnBills(String email, BillStatus status,
+    public Page<BillDTO> getOwnBills(Long userId, BillStatus status,
                                      LocalDateTime fromDate, LocalDateTime toDate,
                                      Double minCost, Double maxCost,
                                      Pageable pageable) {
-        String resolvedUserId = resolveUserIdByEmail(email);
-        Specification<Bill> spec = BillSpecification.hasUser(resolvedUserId);
+        Specification<Bill> spec = BillSpecification.hasUser(userId);
 
         if (status != null) {
             spec = spec.and(BillSpecification.hasStatus(status));
@@ -110,8 +109,7 @@ public class BillService {
     }
 
     @Transactional
-    public BillDTO createBill(String email, CreateBillRequest request) {
-        String resolvedUserId = resolveUserIdByEmail(email);
+    public BillDTO createBill(Long userId, CreateBillRequest request) {
         PaymentMethod paymentMethod = paymentMethodRepository.findById(request.getPaymentMethodId())
                 .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_METHOD_NOT_FOUND));
 
@@ -158,7 +156,7 @@ public class BillService {
             log.info("Active event found: ID={}, Name={}, Rules={}, Targets={}, Actions={}",
                     activeEvent.getId(), activeEvent.getName(), activeEvent.getRules(),
                     activeEvent.getTargets(), activeEvent.getActions());
-            boolean isEligible = checkEventRule(activeEvent, email, tempTotalCost, totalQuantity);
+            boolean isEligible = checkEventRule(activeEvent, tempTotalCost, totalQuantity);
             log.info("Rule eligibility checked: isEligible={} for tempTotalCost={}, totalQuantity={}", isEligible, tempTotalCost, totalQuantity);
             if (isEligible) {
                 for (BookResponse book : books) {
@@ -192,7 +190,7 @@ public class BillService {
 
         // 4. Save Bill Entity
         Bill bill = Bill.builder()
-                .userId(resolvedUserId)
+                .userId(userId)
                 .paymentMethod(paymentMethod)
                 .shippingMethod(shippingMethod)
                 .totalCost(totalCost)
@@ -235,8 +233,7 @@ public class BillService {
     }
 
     @Transactional(readOnly = true)
-    public BillDTO previewBill(String email, CreateBillRequest request) {
-        String resolvedUserId = resolveUserIdByEmail(email);
+    public BillDTO previewBill(Long userId, CreateBillRequest request) {
         PaymentMethod paymentMethod = paymentMethodRepository.findById(request.getPaymentMethodId())
                 .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_METHOD_NOT_FOUND));
 
@@ -283,7 +280,7 @@ public class BillService {
             log.info("Active event found for preview: ID={}, Name={}, Rules={}, Targets={}, Actions={}",
                     activeEvent.getId(), activeEvent.getName(), activeEvent.getRules(),
                     activeEvent.getTargets(), activeEvent.getActions());
-            boolean isEligible = checkEventRule(activeEvent, email, tempTotalCost, totalQuantity);
+            boolean isEligible = checkEventRule(activeEvent, tempTotalCost, totalQuantity);
             log.info("Rule eligibility checked for preview: isEligible={} for tempTotalCost={}, totalQuantity={}", isEligible, tempTotalCost, totalQuantity);
             if (isEligible) {
                 for (BookResponse book : books) {
@@ -329,17 +326,17 @@ public class BillService {
 
         String userName = "Người dùng";
         try {
-            ApiResponse<UserProfileResponse> profileResponse = userClient.getProfile(resolvedUserId);
+            ApiResponse<UserProfileResponse> profileResponse = userClient.getProfile(userId);
             if (profileResponse != null && profileResponse.getResult() != null) {
                 UserProfileResponse profile = profileResponse.getResult();
                 userName = profile.getUsername() != null ? profile.getUsername() : (profile.getFirstName() + " " + profile.getLastName()).trim();
             }
         } catch (Exception e) {
-            log.warn("Failed to enrich username for userId={} in preview: {}", resolvedUserId, e.getMessage());
+            log.warn("Failed to enrich username for userId={} in preview: {}", userId, e.getMessage());
         }
 
         return BillDTO.builder()
-                .userId(resolvedUserId)
+                .userId(userId)
                 .userName(userName)
                 .paymentMethodId(paymentMethod.getId())
                 .paymentMethodName(paymentMethod.getName())
@@ -437,7 +434,7 @@ public class BillService {
     // RULE CHECKING & DISCOUNT HELPERS
     // ──────────────────────────────────────────────────────────────────────────
 
-    private boolean checkEventRule(EventResponse event, String email, Double orderValue, Integer totalQuantity) {
+    private boolean checkEventRule(EventResponse event, Double orderValue, Integer totalQuantity) {
         if (event.getRules() == null || event.getRules().isEmpty()) {
             return true;
         }
@@ -533,7 +530,7 @@ public class BillService {
         emailModel.put("actionText", "Truy cập BookLand");
 
         NotificationEvent event = NotificationEvent.builder()
-                .toUserId(bill.getUserId())
+                .toUserId(String.valueOf(bill.getUserId()))
                 .type("ORDER")
                 .title("Đặt hàng thành công!")
                 .content(String.format("Đơn hàng #%d của bạn đã được đặt thành công và đang chờ xác thực.", bill.getId()))
@@ -566,7 +563,7 @@ public class BillService {
         emailModel.put("actionText", "Truy cập BookLand");
 
         NotificationEvent event = NotificationEvent.builder()
-                .toUserId(bill.getUserId())
+                .toUserId(String.valueOf(bill.getUserId()))
                 .type("ORDER")
                 .title("Cập nhật trạng thái đơn hàng")
                 .content(String.format("Đơn hàng #%d của bạn đã chuyển sang trạng thái: %s", bill.getId(), bill.getStatus().name()))
@@ -777,17 +774,9 @@ public class BillService {
 
         String approvedByName = null;
         if (bill.getApprovedBy() != null) {
-            try {
-                ApiResponse<UserProfileResponse> profileResponse = userClient.getProfile(bill.getApprovedBy());
-                if (profileResponse != null && profileResponse.getResult() != null) {
-                    UserProfileResponse profile = profileResponse.getResult();
-                    approvedByName = profile.getUsername() != null ? profile.getUsername() : (profile.getFirstName() + " " + profile.getLastName()).trim();
-                } else {
-                    approvedByName = bill.getApprovedBy().split("@")[0];
-                }
-            } catch (Exception e) {
-                approvedByName = bill.getApprovedBy().split("@")[0];
-            }
+            // approvedBy lưu email của approver — extract username từ email
+            String approvedBy = bill.getApprovedBy();
+            approvedByName = approvedBy.contains("@") ? approvedBy.split("@")[0] : approvedBy;
         }
 
         return BillDTO.builder()
@@ -837,23 +826,9 @@ public class BillService {
     }
 
     @Transactional(readOnly = true)
-    public boolean verifyPurchase(String userId, Long bookId) {
+    public boolean verifyPurchase(Long userId, Long bookId) {
         return billRepository.existsByUserIdAndBookIdAndStatusIn(
                 userId, bookId, List.of(BillStatus.SHIPPED, BillStatus.COMPLETED)
         );
-    }
-
-    private String resolveUserIdByEmail(String email) {
-        try {
-            ApiResponse<UserProfileResponse> response = userClient.getMyProfile(email);
-            if (response != null && response.getResult() != null) {
-                UserProfileResponse profile = response.getResult();
-                return profile.getUserId() != null ? profile.getUserId() : profile.getId();
-            }
-        } catch (Exception e) {
-            log.error("Failed to resolve user ID for email: {}", email, e);
-            throw new AppException(ErrorCode.UNAUTHENTICATED);
-        }
-        throw new AppException(ErrorCode.UNAUTHENTICATED);
     }
 }

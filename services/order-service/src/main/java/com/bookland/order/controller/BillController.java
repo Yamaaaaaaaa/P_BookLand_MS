@@ -38,7 +38,7 @@ public class BillController {
     @GetMapping
     @Operation(summary = "Lấy tất cả đơn hàng (Admin/Manager/Staff)")
     public ResponseEntity<ApiResponse<Page<BillDTO>>> getAllBills(
-            @RequestParam(required = false) String userId,
+            @RequestParam(required = false) Long userId,
             @RequestParam(required = false) BillStatus status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
@@ -62,7 +62,7 @@ public class BillController {
     @GetMapping("/my-bills")
     @Operation(summary = "Lấy danh sách đơn hàng cá nhân")
     public ResponseEntity<ApiResponse<Page<BillDTO>>> getOwnBills(
-            @Parameter(hidden = true) @RequestHeader("X-User-Email") String email,
+            @Parameter(hidden = true) @RequestHeader("X-User-Id") Long userId,
             @RequestParam(required = false) BillStatus status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
@@ -73,13 +73,13 @@ public class BillController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "DESC") String sortDirection
     ) {
-        log.info("GET /api/bills/my-bills for email={}", email);
+        log.info("GET /api/bills/my-bills for userId={}", userId);
         Sort.Direction direction = sortDirection.equalsIgnoreCase("ASC")
                 ? Sort.Direction.ASC
                 : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
-        Page<BillDTO> bills = billService.getOwnBills(email, status, fromDate, toDate, minCost, maxCost, pageable);
+        Page<BillDTO> bills = billService.getOwnBills(userId, status, fromDate, toDate, minCost, maxCost, pageable);
         return ResponseEntity.ok(ApiResponse.<Page<BillDTO>>builder().result(bills).build());
     }
 
@@ -93,26 +93,26 @@ public class BillController {
     @PostMapping
     @Operation(summary = "Tạo đơn hàng mới")
     public ResponseEntity<ApiResponse<BillDTO>> createBill(
-            @Parameter(hidden = true) @RequestHeader("X-User-Email") String email,
+            @Parameter(hidden = true) @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody CreateBillRequest request
     ) {
-        log.info("POST /api/bills from email={}", email);
+        log.info("POST /api/bills from userId={}", userId);
         return ResponseEntity.ok(ApiResponse.<BillDTO>builder()
                 .message("Đặt hàng thành công")
-                .result(billService.createBill(email, request))
+                .result(billService.createBill(userId, request))
                 .build());
     }
 
     @PostMapping("/preview")
     @Operation(summary = "Xem trước hóa đơn để tính khuyến mãi/vận chuyển")
     public ResponseEntity<ApiResponse<BillDTO>> previewBill(
-            @Parameter(hidden = true) @RequestHeader("X-User-Email") String email,
+            @Parameter(hidden = true) @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody CreateBillRequest request
     ) {
-        log.info("POST /api/bills/preview from email={}", email);
+        log.info("POST /api/bills/preview from userId={}", userId);
         return ResponseEntity.ok(ApiResponse.<BillDTO>builder()
                 .message("Xem trước hóa đơn thành công")
-                .result(billService.previewBill(email, request))
+                .result(billService.previewBill(userId, request))
                 .build());
     }
 
@@ -136,37 +136,37 @@ public class BillController {
             @PathVariable Long id,
             @Parameter(hidden = true) @RequestHeader("X-User-Email") String email,
             @Parameter(hidden = true) @RequestHeader("X-User-Roles") String roles
-     ) {
-         log.info("PATCH /api/bills/{}/confirm-delivered from email={}", id, email);
-         if (roles == null || !roles.contains("ROLE_SHIPPER")) {
-             throw new AppException(ErrorCode.FORBIDDEN);
-         }
-         return ResponseEntity.ok(ApiResponse.<BillDTO>builder()
-                 .message("Xác nhận đã giao hàng thành công")
-                 .result(billService.confirmDelivered(id, email))
-                 .build());
-     }
+    ) {
+        log.info("PATCH /api/bills/{}/confirm-delivered from email={}", id, email);
+        if (roles == null || !roles.contains("ROLE_SHIPPER")) {
+            throw new AppException(ErrorCode.FORBIDDEN);
+        }
+        return ResponseEntity.ok(ApiResponse.<BillDTO>builder()
+                .message("Xác nhận đã giao hàng thành công")
+                .result(billService.confirmDelivered(id, email))
+                .build());
+    }
 
-     @GetMapping("/shipping-list")
-     @Operation(summary = "Lấy danh sách đơn hàng đang giao (Chỉ dành cho Shipper)")
-     public ResponseEntity<ApiResponse<Page<BillDTO>>> getShippingBills(
-             @Parameter(hidden = true) @RequestHeader("X-User-Roles") String roles,
-             @RequestParam(defaultValue = "0") int page,
-             @RequestParam(defaultValue = "10") int size,
-             @RequestParam(defaultValue = "createdAt") String sortBy,
-             @RequestParam(defaultValue = "DESC") String sortDirection
-     ) {
-         log.info("GET /api/bills/shipping-list");
-         if (roles == null || (!roles.contains("ROLE_SHIPPER") && !roles.contains("ROLE_ADMIN"))) {
-             throw new AppException(ErrorCode.FORBIDDEN);
-         }
-         Sort.Direction direction = sortDirection.equalsIgnoreCase("ASC")
-                 ? Sort.Direction.ASC
-                 : Sort.Direction.DESC;
-         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-         Page<BillDTO> bills = billService.getAllBills(null, BillStatus.SHIPPING, null, null, null, null, pageable);
-         return ResponseEntity.ok(ApiResponse.<Page<BillDTO>>builder().result(bills).build());
-     }
+    @GetMapping("/shipping-list")
+    @Operation(summary = "Lấy danh sách đơn hàng đang giao (Chỉ dành cho Shipper)")
+    public ResponseEntity<ApiResponse<Page<BillDTO>>> getShippingBills(
+            @Parameter(hidden = true) @RequestHeader("X-User-Roles") String roles,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDirection
+    ) {
+        log.info("GET /api/bills/shipping-list");
+        if (roles == null || (!roles.contains("ROLE_SHIPPER") && !roles.contains("ROLE_ADMIN"))) {
+            throw new AppException(ErrorCode.FORBIDDEN);
+        }
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("ASC")
+                ? Sort.Direction.ASC
+                : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        Page<BillDTO> bills = billService.getAllBills(null, BillStatus.SHIPPING, null, null, null, null, pageable);
+        return ResponseEntity.ok(ApiResponse.<Page<BillDTO>>builder().result(bills).build());
+    }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Xóa đơn hàng (Admin/Manager)")
@@ -179,7 +179,7 @@ public class BillController {
     @GetMapping("/internal/verify-purchase")
     @Operation(summary = "Xác thực người dùng đã mua sách thành công (Internal API)")
     public ResponseEntity<ApiResponse<Boolean>> verifyPurchase(
-            @RequestParam String userId,
+            @RequestParam Long userId,
             @RequestParam Long bookId
     ) {
         log.info("GET /api/bills/internal/verify-purchase?userId={}&bookId={}", userId, bookId);
