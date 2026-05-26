@@ -58,10 +58,12 @@ public class PaymentMethodController {
     }
 
     @GetMapping
-    @Operation(summary = "Lấy danh sách tất cả phương thức thanh toán (không phân trang)")
-    public ResponseEntity<ApiResponse<List<PaymentMethodDTO>>> getAll() {
-        log.info("GET /api/payment-methods");
-        return ResponseEntity.ok(paymentMethodService.getAll());
+    @Operation(summary = "Lấy danh sách tất cả phương thức thanh toán (phân trang)")
+    public ResponseEntity<ApiResponse<PageResponse<PaymentMethodDTO>>> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size) {
+        log.info("GET /api/payment-methods page={} size={}", page, size);
+        return ResponseEntity.ok(paymentMethodService.getPage(page, size));
     }
 
     @GetMapping("/paged")

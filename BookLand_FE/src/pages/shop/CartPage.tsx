@@ -182,7 +182,8 @@ const CartPage = () => {
                     bookId: item.bookId,
                     quantity: item.quantity
                 })),
-                shippingMethodId: selectedShippingId
+                shippingMethodId: selectedShippingId,
+                paymentMethodId: selectedPaymentId
             };
 
             const response = await billService.previewBill(previewRequest);

@@ -58,10 +58,12 @@ public class ShippingMethodController {
     }
 
     @GetMapping
-    @Operation(summary = "Lấy danh sách tất cả phương thức vận chuyển (không phân trang)")
-    public ResponseEntity<ApiResponse<List<ShippingMethodDTO>>> getAll() {
-        log.info("GET /api/shipping-methods");
-        return ResponseEntity.ok(shippingMethodService.getAll());
+    @Operation(summary = "Lấy danh sách tất cả phương thức vận chuyển (phân trang)")
+    public ResponseEntity<ApiResponse<PageResponse<ShippingMethodDTO>>> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size) {
+        log.info("GET /api/shipping-methods page={} size={}", page, size);
+        return ResponseEntity.ok(shippingMethodService.getPage(page, size));
     }
 
     @GetMapping("/paged")

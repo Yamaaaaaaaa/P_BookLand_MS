@@ -18,6 +18,7 @@ interface BillQueryParams {
 export interface PreviewBillRequest {
     books: { bookId: number; quantity: number }[];
     shippingMethodId: number;
+    paymentMethodId: number;
 }
 
 
