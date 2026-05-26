@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/vnpay")
+@RequestMapping("/api/online-payment")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Payment APIs")

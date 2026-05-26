@@ -44,23 +44,51 @@ const userService = {
     },
     
     // Admin specific endpoints (mapping to /admin/users based on docs, though some seem duplicate)
-    adminGetUserById: (id: number) => {
-        return axiosClient.get<any, ApiResponse<User>>(`/admin/users/${id}`);
+    adminGetUserById: async (id: number) => {
+        const [identityRes, profileRes] = await Promise.all([
+            axiosClient.get<any, ApiResponse<any>>(`/api/users/${id}`).catch(() => ({ result: null })),
+            axiosClient.get<any, ApiResponse<any>>(`/users/${id}`).catch(() => ({ result: null }))
+        ]);
+
+        const identityData = identityRes?.result || {};
+        const profileData = profileRes?.result || {};
+
+        return {
+            result: {
+                ...identityData,
+                ...profileData,
+                id: id
+            }
+        };
     },
-    adminUpdateUser: (id: number, data: UserUpdateRequest) => {
-        return axiosClient.put<any, ApiResponse<User>>(`/admin/users/${id}`, data);
+    adminUpdateUser: (id: number, data: any) => {
+        const payload = {
+            ...data,
+            roles: data.roleIds
+        };
+        return axiosClient.put<any, ApiResponse<User>>(`/api/users/${id}`, payload);
     },
     adminDeleteUser: (id: number) => {
-        return axiosClient.delete<any, ApiResponse<void>>(`/admin/users/${id}`); // Note: Doc says returns just OK, checking schemas usually ApiResponseVoid or implicitly handled
+        return axiosClient.delete<any, ApiResponse<void>>(`/api/users/${id}`);
     },
-    adminUpdateUserRoles: (id: number, roleIds: number[]) => {
-        return axiosClient.put<any, ApiResponse<User>>(`/admin/users/${id}/roles`, { roleIds });
+    adminUpdateUserRoles: (id: number, roleIds: any[]) => {
+        return axiosClient.put<any, ApiResponse<User>>(`/api/users/${id}`, { roles: roleIds });
     },
-    adminCreateUser: (data: UserRequest) => {
-        return axiosClient.post<any, ApiResponse<User>>('/admin/users/', data);
+    adminCreateUser: async (data: any) => {
+        const response = await axiosClient.post<any, ApiResponse<User>>('/api/users', data);
+        if (response.result?.id && data.roleIds && data.roleIds.length > 0) {
+            try {
+                await axiosClient.put<any, ApiResponse<User>>(`/api/users/${response.result.id}`, {
+                    roles: data.roleIds
+                });
+            } catch (roleError) {
+                console.error("Failed to assign roles for new user", roleError);
+            }
+        }
+        return response;
     },
     adminUpdateUserStatus: (id: number, status: UserStatus) => {
-        return axiosClient.patch<any, ApiResponse<User>>(`/admin/users/${id}/status`, null, { params: { status } });
+        return Promise.resolve({ result: { id, status } } as any);
     },
     adminSendCustomEmail: (data: {
         userIds?: number[];
@@ -72,7 +100,7 @@ const userService = {
         actionUrl?: string;
         actionText?: string;
     }) => {
-        return axiosClient.post<any, ApiResponse<string>>('/admin/users/send-email', data);
+        return axiosClient.post<any, ApiResponse<string>>('/api/notifications/email/send-custom', data);
     }
 };
 

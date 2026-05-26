@@ -17,7 +17,7 @@ const ManageUserPage = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null);
+    const [selectedRoleName, setSelectedRoleName] = useState<string | null>(null);
     const [availableRoles, setAvailableRoles] = useState<Role[]>([]);
 
     // Pagination State
@@ -35,7 +35,7 @@ const ManageUserPage = () => {
                 page: currentPage - 1,
                 size: itemsPerPage,
                 keyword: searchTerm,
-                roleId: selectedRoleId || undefined,
+                roleId: selectedRoleName || undefined,
             };
 
             if (sortConfig) {
@@ -45,8 +45,8 @@ const ManageUserPage = () => {
 
             const response = await userService.getAllUsers(params);
             if (response.result) {
-                setUsers(response.result.content);
-                setTotalPages(response.result.totalPages);
+                setUsers(response.result.content || []);
+                setTotalPages(response.result.totalPages || 0);
             }
         } catch (error) {
             console.error('Error fetching users:', error);
@@ -54,7 +54,7 @@ const ManageUserPage = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [currentPage, itemsPerPage, searchTerm, selectedRoleId, sortConfig, t]);
+    }, [currentPage, itemsPerPage, searchTerm, selectedRoleName, sortConfig, t]);
 
     // Fetch roles on mount
     useEffect(() => {
@@ -62,7 +62,10 @@ const ManageUserPage = () => {
             try {
                 const response = await roleService.getAllRoles({ size: 100 });
                 if (response.result) {
-                    setAvailableRoles(response.result.content);
+                    const rolesData = Array.isArray(response.result)
+                        ? response.result
+                        : (response.result as any).content || [];
+                    setAvailableRoles(rolesData || []);
                 }
             } catch (error) {
                 console.error('Error fetching roles:', error);
@@ -139,15 +142,15 @@ const ManageUserPage = () => {
                 <select
                     className="form-select"
                     style={{ width: '200px' }}
-                    value={selectedRoleId || ''}
+                    value={selectedRoleName || ''}
                     onChange={(e) => {
-                        setSelectedRoleId(e.target.value ? Number(e.target.value) : null);
+                        setSelectedRoleName(e.target.value || null);
                         setCurrentPage(1);
                     }}
                 >
                     <option value="">{t('admin.manage_user_page.all_roles')}</option>
-                    {availableRoles.map(role => (
-                        <option key={role.id} value={role.id}>
+                    {availableRoles?.map(role => (
+                        <option key={role.name} value={role.name}>
                             {role.name}
                         </option>
                     ))}
@@ -184,7 +187,7 @@ const ManageUserPage = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {users.map(user => (
+                            {users?.map(user => (
                                 <tr key={user.id}>
                                     <td>#{user.id}</td>
                                     <td>
@@ -215,7 +218,7 @@ const ManageUserPage = () => {
                                     <td>
                                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                                             {user.roles?.map(r => (
-                                                <span key={r.id} style={{ fontSize: '0.8rem', padding: '0.1rem 0.5rem', backgroundColor: '#f3f4f6', borderRadius: '4px' }}>
+                                                <span key={r.name} style={{ fontSize: '0.8rem', padding: '0.1rem 0.5rem', backgroundColor: '#f3f4f6', borderRadius: '4px' }}>
                                                     {r.name}
                                                 </span>
                                             ))}

@@ -233,7 +233,7 @@ public class BillService {
     }
 
     @Transactional(readOnly = true)
-    public BillDTO previewBill(Long userId, CreateBillRequest request) {
+    public BillPreviewDTO previewBill(Long userId, CreateBillRequest request) {
         PaymentMethod paymentMethod = paymentMethodRepository.findById(request.getPaymentMethodId())
                 .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_METHOD_NOT_FOUND));
 
@@ -303,48 +303,46 @@ public class BillService {
             log.info("No active event found for preview (activeEvent is null)");
         }
 
-        // 3. Recalculate final totals
+        // 3. Recalculate final totals and build BookPreviewDTO list
         double finalBooksCost = 0.0;
-        List<BillBookDTO> bookDTOs = new ArrayList<>();
+        List<BookPreviewDTO> bookPreviews = new ArrayList<>();
         for (BookResponse book : books) {
-            double price = discountedPrices.getOrDefault(book.getId(), book.getFinalPrice() != null ? book.getFinalPrice() : 0.0);
+            double originalPrice = book.getFinalPrice() != null ? book.getFinalPrice() : 0.0;
+            double finalPrice = discountedPrices.getOrDefault(book.getId(), originalPrice);
             int qty = quantities.get(book.getId());
-            double subtotal = price * qty;
+            double subtotal = finalPrice * qty;
             finalBooksCost += subtotal;
 
-            bookDTOs.add(BillBookDTO.builder()
+            boolean hasDiscount = discountedPrices.containsKey(book.getId());
+
+            bookPreviews.add(BookPreviewDTO.builder()
                     .bookId(book.getId())
                     .bookName(book.getName())
                     .bookImageUrl(book.getBookImageUrl())
-                    .priceSnapshot(price)
+                    .originalPrice(originalPrice)
+                    .eventDiscountedPrice(hasDiscount ? finalPrice : null)
+                    .finalPrice(finalPrice)
                     .quantity(qty)
                     .subtotal(subtotal)
+                    .hasEventDiscount(hasDiscount)
                     .build());
         }
 
-        double totalCost = finalBooksCost + shippingMethod.getPrice();
+        double shippingCost = shippingMethod.getPrice();
+        double grandTotal = finalBooksCost + shippingCost;
+        double totalSaved = tempTotalCost - finalBooksCost;
 
-        String userName = "Người dùng";
-        try {
-            ApiResponse<UserProfileResponse> profileResponse = userClient.getProfile(userId);
-            if (profileResponse != null && profileResponse.getResult() != null) {
-                UserProfileResponse profile = profileResponse.getResult();
-                userName = profile.getUsername() != null ? profile.getUsername() : (profile.getFirstName() + " " + profile.getLastName()).trim();
-            }
-        } catch (Exception e) {
-            log.warn("Failed to enrich username for userId={} in preview: {}", userId, e.getMessage());
-        }
-
-        return BillDTO.builder()
-                .userId(userId)
-                .userName(userName)
-                .paymentMethodId(paymentMethod.getId())
-                .paymentMethodName(paymentMethod.getName())
-                .shippingMethodId(shippingMethod.getId())
-                .shippingMethodName(shippingMethod.getName())
-                .shippingCost(shippingMethod.getPrice())
-                .totalCost(totalCost)
-                .books(bookDTOs)
+        return BillPreviewDTO.builder()
+                .books(bookPreviews)
+                .originalSubtotal(tempTotalCost)
+                .discountedSubtotal(finalBooksCost)
+                .shippingCost(shippingCost)
+                .totalSaved(totalSaved)
+                .grandTotal(grandTotal)
+                .hasEventApplied(appliedEvent != null)
+                .appliedEventId(appliedEvent != null ? appliedEvent.getId() : null)
+                .appliedEventName(appliedEvent != null ? appliedEvent.getName() : null)
+                .appliedEventType(appliedEvent != null ? appliedEvent.getType() : null)
                 .build();
     }
 

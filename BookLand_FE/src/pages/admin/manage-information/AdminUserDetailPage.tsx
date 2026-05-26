@@ -47,7 +47,10 @@ const AdminUserDetailPage = () => {
         try {
             const response = await roleService.getAllRoles({ size: 100 }); // Get all roles
             if (response.result) {
-                setAvailableRoles(response.result.content);
+                const rolesData = Array.isArray(response.result)
+                    ? response.result
+                    : (response.result as any).content || [];
+                setAvailableRoles(rolesData || []);
             }
         } catch (error) {
             console.error('Error fetching roles:', error);
@@ -318,7 +321,7 @@ const AdminUserDetailPage = () => {
                                         </p>
                                     )}
                                     <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                                        {availableRoles.map(role => {
+                                        {availableRoles?.map(role => {
                                             const isAdminLogin = role.name === 'ADMIN_LOGIN';
 
                                             // Hide ADMIN_LOGIN if user has USER role

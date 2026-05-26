@@ -4,6 +4,7 @@ import com.bookland.order.dto.request.CreateBillRequest;
 import com.bookland.order.dto.request.UpdateBillStatusRequest;
 import com.bookland.order.dto.response.ApiResponse;
 import com.bookland.order.dto.response.BillDTO;
+import com.bookland.order.dto.response.BillPreviewDTO;
 import com.bookland.order.entity.Bill.BillStatus;
 import com.bookland.order.service.BillService;
 import com.bookland.order.exception.AppException;
@@ -105,12 +106,12 @@ public class BillController {
 
     @PostMapping("/preview")
     @Operation(summary = "Xem trước hóa đơn để tính khuyến mãi/vận chuyển")
-    public ResponseEntity<ApiResponse<BillDTO>> previewBill(
+    public ResponseEntity<ApiResponse<BillPreviewDTO>> previewBill(
             @Parameter(hidden = true) @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody CreateBillRequest request
     ) {
         log.info("POST /api/bills/preview from userId={}", userId);
-        return ResponseEntity.ok(ApiResponse.<BillDTO>builder()
+        return ResponseEntity.ok(ApiResponse.<BillPreviewDTO>builder()
                 .message("Xem trước hóa đơn thành công")
                 .result(billService.previewBill(userId, request))
                 .build());

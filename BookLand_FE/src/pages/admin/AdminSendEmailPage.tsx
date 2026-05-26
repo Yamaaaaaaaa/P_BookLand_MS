@@ -40,8 +40,8 @@ const AdminSendEmailPage = () => {
 
             const response = await userService.getAllUsers(params);
             if (response.result) {
-                setUsers(response.result.content);
-                setTotalPages(response.result.totalPages);
+                setUsers(response.result.content || []);
+                setTotalPages(response.result.totalPages || 0);
             }
         } catch (error) {
             console.error('Error fetching users:', error);
@@ -285,7 +285,7 @@ const AdminSendEmailPage = () => {
                                 </div>
                             ) : (
                                 <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                                    {users.map(user => (
+                                    {users?.map(user => (
                                         <li key={user.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
                                             <label style={{ display: 'flex', alignItems: 'center', padding: '0.75rem', cursor: 'pointer', gap: '0.75rem' }}>
                                                 <input

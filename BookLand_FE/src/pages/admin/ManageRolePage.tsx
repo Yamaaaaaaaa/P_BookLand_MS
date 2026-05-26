@@ -40,8 +40,11 @@ const ManageRolePage = () => {
 
             const response = await roleService.getAllRoles(params);
             if (response.result) {
-                setRoles(response.result.content);
-                setTotalPages(response.result.totalPages);
+                const rolesData = Array.isArray(response.result)
+                    ? response.result
+                    : (response.result as any).content || [];
+                setRoles(rolesData || []);
+                setTotalPages((response.result as any).totalPages || 1);
             }
         } catch (error) {
             console.error('Error fetching roles:', error);
@@ -176,7 +179,7 @@ const ManageRolePage = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {roles.map(role => (
+                            {roles?.map(role => (
                                 <tr key={role.id}>
                                     <td>#{role.id}</td>
                                     <td>
