@@ -121,9 +121,29 @@ git config --global user.email "your-email@example.com"
        git pull origin dev
        ```
 
-#### Bước 3: Biên dịch mã nguồn ra file JAR
-Vì cấu trúc hiện tại yêu cầu build ra file `.jar` trên host trước khi đưa vào Docker, bạn cần biên dịch mã nguồn. Đảm bảo máy ảo Ubuntu đã cài đặt JDK 17 và Maven (nếu chưa có: `sudo apt update && sudo apt install openjdk-17-jdk maven -y`).
-Tại thư mục gốc `/home/vboxuser/P_BookLand_MS`, chạy lệnh:
+#### Bước 3: Cài đặt JDK 17, Maven và Biên dịch mã nguồn ra file JAR
+
+Vì cấu trúc hiện tại yêu cầu build ra file `.jar` trên máy ảo Ubuntu (host) trước khi đưa vào Docker, bạn cần cài đặt môi trường và biên dịch mã nguồn.
+
+##### 3.1 Cài đặt JDK 17 và Maven trên máy ảo Ubuntu (Nếu chưa có)
+
+Nếu máy ảo chưa được cài đặt Java và Maven, hãy mở Terminal trên Ubuntu và chạy các lệnh sau:
+
+```bash
+# 1. Cập nhật danh sách gói phần mềm
+sudo apt update
+
+# 2. Cài đặt OpenJDK 17 và Maven
+sudo apt install openjdk-17-jdk maven -y
+
+# 3. Xác minh cài đặt thành công
+java -version
+mvn -version
+```
+
+##### 3.2 Biên dịch mã nguồn
+
+Tại thư mục gốc `/home/vboxuser/P_BookLand_MS`, chạy lệnh sau để build toàn bộ các service:
 ```bash
 mvn clean package -DskipTests
 ```

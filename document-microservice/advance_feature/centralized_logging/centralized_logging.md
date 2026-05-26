@@ -1,68 +1,68 @@
-# Kế hoạch Triển khai Centralized Logging cho Hệ thống P_BookLand_MS
+# Kế hoạch Triển khai Centralized Logging (EFK Stack) cho P_BookLand_MS
 
-Tài liệu này nghiên cứu, so sánh và lập kế hoạch chi tiết để triển khai hệ thống **Centralized Logging (Ghi log tập trung)** và **Distributed Tracing (Bám vết phân tán)** cho hệ thống Microservices P_BookLand_MS của bạn.
+Tài liệu này chi tiết hóa kế hoạch triển khai hệ thống **Centralized Logging (Ghi log tập trung)** và **Distributed Tracing (Bám vết phân tán)** sử dụng **EFK Stack** cho hệ thống Microservices P_BookLand_MS.
 
 ---
 
 ## 1. Giới thiệu & Mục tiêu
 
-Với hệ thống hiện tại gồm **11 dịch vụ độc lập** (Gateway, Identity, User, Book, Order, Event, Notification, File, Search, Chat, Chatbot) chạy trên Docker Compose hoặc Kubernetes (Minikube), việc dò tìm lỗi (debug) bằng cách xem log thủ công của từng container/pod là cực kỳ khó khăn.
+Với hệ thống hiện tại gồm **11 dịch vụ độc lập** chạy trên Docker Compose hoặc Kubernetes (Minikube), việc dò tìm lỗi (debug) bằng cách xem log thủ công của từng container/pod là cực kỳ khó khăn.
 
 **Mục tiêu hệ thống Centralized Logging:**
-1. **Distributed Tracing (Liên kết vết)**: Mỗi request từ Client khi đi qua API Gateway sẽ được gán một `Trace ID` duy nhất. Trace ID này sẽ tự động đi theo request qua các cuộc gọi HTTP (OpenFeign) hoặc các thông điệp hàng đợi (Kafka Record Headers).
-2. **Structured Logging (Log cấu trúc)**: Đổi định dạng log từ Plain Text thông thường sang **JSON format** (khi chạy ở môi trường Docker/K8s) giúp các Agent thu thập dễ dàng parse và index.
-3. **Centralized Log Aggregation (Thu thập tập trung)**: Tự động gom log từ luồng ra stdout/stderr của tất cả các container/pod về một DB lưu trữ tập trung.
-4. **Log Trực quan (Visualization)**: Cung cấp giao diện Web (Kibana hoặc Grafana) để tìm kiếm log theo `Trace ID`, `Level` (INFO, ERROR, WARN), `Service Name`, hoặc `Time range`.
+1. **Distributed Tracing (Liên kết vết)**: Mỗi request từ Client khi đi qua API Gateway sẽ được gán một `Trace ID` duy nhất. Trace ID này tự động đi theo request qua các cuộc gọi HTTP (OpenFeign) hoặc các thông điệp hàng đợi (Kafka Record Headers).
+2. **Structured Logging (Log cấu trúc)**: Đổi định dạng log từ Plain Text thông thường sang **JSON format** (khi chạy ở môi trường Docker/K8s) giúp Filebeat dễ dàng parse và Elasticsearch đánh index hiệu quả.
+3. **Centralized Log Aggregation (Thu thập tập trung)**: Tự động gom log từ stdout/stderr của tất cả các container/pod về Elasticsearch.
+4. **Log Trực quan (Visualization)**: Cung cấp giao diện Web Kibana để tìm kiếm log theo `Trace ID`, `Level` (INFO, ERROR, WARN), `Service Name`, hoặc khoảng thời gian.
 
 ---
 
-## 2. So sánh giải pháp & Lựa chọn Kiến trúc
+## 2. Kiến trúc Giải pháp: EFK Stack (Elasticsearch + Filebeat + Kibana)
 
-Dựa trên cấu hình hạ tầng hiện có trong file [docker-compose.yml](file:///d:/Microservices/P_BookLand_MS/docker-compose.yml) và cấu hình Kubernetes trong [trienkhai.md](file:///d:/Microservices/P_BookLand_MS/document-microservice/trienkhai_kubenetes/trienkhai.md), chúng ta có hai hướng đi chính:
+Hệ thống của bạn **đã có sẵn Elasticsearch** (đang dùng cho `search-service` trên cổng `9200`). Giải pháp EFK tận dụng tối đa hạ tầng này để tối ưu hóa tài nguyên.
 
-### Giải pháp A: EFK Stack (Elasticsearch + Filebeat + Kibana)
-Hệ thống của bạn **đã có sẵn Elasticsearch** (đang dùng cho `search-service`). Đây là một lợi thế cực lớn giúp tiết kiệm tài nguyên cài đặt database mới.
-* **Cơ chế**: 
-  1. Các dịch vụ Spring Boot ghi log ra console dạng JSON.
-  2. **Filebeat** (chạy dưới dạng Container hoặc K8s DaemonSet) thu thập trực tiếp file log của Docker/K8s trên máy host, parse JSON và gửi thẳng về **Elasticsearch**.
-  3. **Kibana** được cài thêm làm giao diện UI để phân tích và tra cứu log.
-* **Mức tiêu hao tài nguyên**: Trung bình (Kibana cần thêm khoảng ~512MB RAM, Elasticsearch đã chạy sẵn nên không tốn thêm quá nhiều bộ nhớ).
+```
+[ Client Request ] 
+       │
+       ▼
+ ┌───────────┐      HTTP (Traceparent)     ┌──────────────────┐
+ │  Gateway  │ ──────────────────────────> │ Business Service │
+ └───────────┘                             └──────────────────┘
+       │                                             │
+       ▼ (Stdout JSON Logs)                          ▼ (Stdout JSON Logs)
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │                      Container Engine log files                        │
+ └────────────────────────────────────────────────────────────────────────┘
+       │
+       ▼ (Harvester / Read files)
+ ┌───────────┐
+ │ Filebeat  │  (Log Collector Agent - DaemonSet/Container)
+ └───────────┘
+       │
+       ▼ (Bulk API - Send logs)
+ ┌───────────────┐
+ │ Elasticsearch │ (Log Storage & Index Database - Port 9200)
+ └───────────────┘
+       ▲
+       │ (Query logs)
+ ┌───────────┐
+ │  Kibana   │ (Visualization & UI - Port 5601)
+ └───────────┘
+```
 
-### Giải pháp B: PLG Stack (Promtail + Loki + Grafana)
-Giải pháp Cloud-native hiện đại rất phổ biến trong môi trường Kubernetes.
-* **Cơ chế**:
-  1. Các dịch vụ ghi log ra console.
-  2. **Promtail** thu thập log và đẩy về **Loki** (Log database nhẹ hơn Elasticsearch nhiều lần vì chỉ đánh index cho metadata/labels chứ không index toàn bộ text).
-  3. **Grafana** (giao diện dashboard trực quan) kết nối Loki làm Data Source để xem log.
-* **Mức tiêu hao tài nguyên**: Rất thấp (Loki + Promtail chỉ tốn ~150-200MB RAM, phù hợp khi chạy máy ảo Minikube có RAM hạn chế).
-
-### Bảng So sánh Chi tiết
-
-| Tiêu chí | EFK Stack (Filebeat + Elasticsearch + Kibana) | PLG Stack (Promtail + Loki + Grafana) |
-| :--- | :--- | :--- |
-| **Tận dụng hạ tầng có sẵn** | **Có** (đã có sẵn Elasticsearch trong dự án). | **Không** (phải cài thêm Loki và Grafana). |
-| **Tiêu hao RAM/CPU** | Trung bình - Cao (Kibana khá nặng). | Rất nhẹ (Loki và Grafana tối ưu hóa tốt). |
-| **Độ phức tạp Cú pháp tìm kiếm** | Dễ (Lucene query hoặc KQL rất trực quan). | Cần học (Sử dụng LogQL, hơi khó với người mới). |
-| **Khả năng Lưu trữ & Index** | Index toàn bộ text (Tìm kiếm full-text cực nhanh). | Chỉ index nhãn metadata (Lưu trữ nén tốt, rẻ hơn). |
-| **Độ tương thích** | Hoàn hảo cho doanh nghiệp lớn. | Rất tốt cho hệ thống vừa/nhỏ, Kubernetes-native. |
-
-> [!TIP]
-> **Khuyến nghị lựa chọn:**
-> 1. Nếu RAM máy ảo Ubuntu chạy Minikube của bạn dư dả (trên 8GB), hãy chọn **EFK Stack** vì đã có sẵn Elasticsearch, bạn chỉ cần triển khai thêm Filebeat và Kibana.
-> 2. Nếu RAM máy ảo bị giới hạn (dưới 8GB) hoặc muốn cấu hình nhẹ tối đa, hãy chọn **PLG Stack**. 
->
-> Dưới đây tài liệu sẽ hướng dẫn cấu hình mã nguồn Java (áp dụng chung) và cung cấp file cấu hình cho **cả hai giải pháp** để bạn tùy ý chọn lựa.
+* **Elasticsearch**: Nơi lưu trữ, đánh chỉ mục (index) và cung cấp API tìm kiếm log nhanh chóng.
+* **Filebeat**: Agent siêu nhẹ chạy trên từng máy chủ (Docker) hoặc từng node (K8s DaemonSet). Filebeat đọc trực tiếp file log của các container, giải mã định dạng JSON và đẩy về Elasticsearch bằng Bulk API.
+* **Kibana**: Cung cấp giao diện Web trực quan để thực hiện các câu truy vấn KQL (Kibana Query Language) tìm kiếm log nhanh theo `traceId`.
 
 ---
 
 ## 3. Thiết kế Distributed Tracing (Trace ID) trong Spring Boot 3.2.5
 
-Spring Boot 3.2.5 sử dụng **Micrometer Tracing** (thay thế cho Spring Cloud Sleuth ở Spring Boot 2.x). Chúng ta sẽ thiết lập để tự động tạo `traceId` và `spanId` đưa vào MDC (Mapped Diagnostic Context) của log.
+Hệ thống sử dụng **Micrometer Tracing** (thay thế cho Spring Cloud Sleuth ở Spring Boot 2.x) kết hợp **OpenTelemetry (OTel)** để bám vết toàn bộ chuỗi cuộc gọi.
 
 ### Giải pháp 1: Sử dụng Micrometer Tracing & OpenTelemetry (Khuyên dùng)
 Cách này tự động bám vết tất cả WebFlux (Gateway), Web MVC (Services), OpenFeign, và Kafka mà không cần viết nhiều code thủ công.
 
-#### Bước 1.1: Cấu hình Parent [pom.xml](file:///d:/Microservices/P_BookLand_MS/pom.xml)
+#### Bước 3.1: Cấu hình Parent [pom.xml](file:///d:/Microservices/P_BookLand_MS/pom.xml)
 Khai báo dependencies quản lý phiên bản trong `dependencyManagement`:
 
 ```xml
@@ -80,7 +80,7 @@ Khai báo dependencies quản lý phiên bản trong `dependencyManagement`:
 </dependencyManagement>
 ```
 
-#### Bước 1.2: Thêm Dependency vào các Service cần Tracing
+#### Bước 3.2: Thêm Dependency vào các Service cần Tracing
 Thêm các thư viện sau vào `pom.xml` của các microservice cần bám vết:
 
 ```xml
@@ -96,7 +96,7 @@ Thêm các thư viện sau vào `pom.xml` của các microservice cần bám v�
 </dependency>
 ```
 
-#### Bước 1.3: Cấu hình `application.yml` chung cho các Service
+#### Bước 3.3: Cấu hình `application.yml` chung cho các Service
 Để kích hoạt việc đưa Trace ID vào MDC tự động và cấu hình tỷ lệ lấy mẫu trace (sampling rate):
 
 ```yaml
@@ -112,7 +112,7 @@ management:
 ---
 
 ### Giải pháp 2: Tự viết Custom Filter & Interceptor (Nhẹ nhất, không dùng thư viện ngoài)
-Nếu không muốn thêm các dependency quản lý giám sát nặng nề, bạn có thể tự viết code Java để truyền Trace ID qua header `X-Correlation-Id`.
+Nếu không muốn thêm các dependency quản lý giám sát, bạn có thể tự viết code Java để truyền Trace ID qua header `X-Correlation-Id`.
 
 #### A. Tại API Gateway: Tạo Global Filter tạo Trace ID
 Tạo tệp `TraceIdFilter.java` trong `api-gateway`:
@@ -197,7 +197,6 @@ public class CorrelationIdInterceptor implements HandlerInterceptor {
     }
 }
 ```
-*Đăng ký Interceptor này vào lớp kế thừa `WebMvcConfigurer` của ứng dụng.*
 
 #### C. Truyền Trace ID qua OpenFeign (HTTP Client calls)
 Tạo một Bean `RequestInterceptor` để tự động đính kèm `X-Correlation-Id` vào các cuộc gọi qua Feign Client:
@@ -249,7 +248,6 @@ public void listen(ConsumerRecord<String, Object> record) {
         MDC.put("traceId", traceId);
     }
     try {
-        // Thực hiện xử lý nghiệp vụ gửi thông báo
         log.info("Processing order notification...");
     } finally {
         MDC.remove("traceId");
@@ -261,10 +259,10 @@ public void listen(ConsumerRecord<String, Object> record) {
 
 ## 4. Định dạng Log dạng JSON bằng Logback
 
-Để Filebeat hoặc Promtail dễ dàng gom log, log ghi ra console cần có định dạng JSON chuẩn thay vì Plain text.
+Để Filebeat dễ dàng gom log và parse các trường như `traceId`, `level`, `message` một cách chuẩn xác, log cần được xuất ra console dưới dạng JSON.
 
 ### Bước 4.1: Thêm thư viện Encoder JSON vào POM
-Thêm dependency này vào parent [pom.xml](file:///d:/Microservices/P_BookLand_MS/pom.xml) (hoặc trực tiếp các service):
+Thêm dependency này vào parent [pom.xml](file:///d:/Microservices/P_BookLand_MS/pom.xml):
 
 ```xml
 <dependency>
@@ -288,7 +286,7 @@ Tạo tệp `src/main/resources/logback-spring.xml` ở từng service. Cấu h�
     <springProfile name="local">
         <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
             <encoder>
-                <!-- Bao gồm định dạng: Thời gian [TraceId] Level Thread Logger - Message -->
+                <!-- Định dạng: Thời gian [TraceId] Level Thread Logger - Message -->
                 <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%X{traceId:-NoTrace}] %highlight(%-5level) [%.15t] %cyan(%-40.40logger{39}) : %msg%n</pattern>
             </encoder>
         </appender>
@@ -326,13 +324,64 @@ Tạo tệp `src/main/resources/logback-spring.xml` ở từng service. Cấu h�
 
 ---
 
-## 5. Triển khai Hệ thống Log Aggregator trên Docker Compose
+## 5. Tối ưu hóa & Giới hạn Logs thực sự cần thiết (Log Filtering)
 
-Nếu bạn muốn chạy thử nghiệm local bằng Docker Compose, hãy bổ sung các cấu hình sau:
+Nếu ghi nhận tất cả mọi hoạt động của các thư viện bên thứ ba (Spring, Hibernate, Kafka, Apache client), hệ thống sẽ bị quá tải logs rác, tiêu tốn rất nhiều RAM/Disk của Elasticsearch và làm loãng logs nghiệp vụ thực tế. 
 
-### Phương án A: Tích hợp Kibana & Filebeat (Nếu dùng Elasticsearch sẵn có)
+Dưới đây là kế hoạch cấu hình để chỉ thu thập những logs thực sự cần thiết:
 
-Bổ sung Kibana và Filebeat vào file [docker-compose.yml](file:///d:/Microservices/P_BookLand_MS/docker-compose.yml):
+### 5.1 Cấu hình Logging Levels tối ưu trong `application.yml`
+Bằng việc cấu hình logging levels một cách chính xác cho từng môi trường (Production/Docker), chúng ta có thể loại bỏ tới **85% logs rác** từ các thư viện:
+
+```yaml
+logging:
+  level:
+    root: WARN                   # Mặc định chỉ log WARN và ERROR cho tất cả các thư viện
+    com.bookland: INFO            # Chỉ ghi log nghiệp vụ thực tế của hệ thống chúng ta
+    org.springframework: WARN     # Tắt log INFO verbose lúc khởi động hoặc quét class của Spring
+    org.springframework.web: INFO # Giữ lại log của Controller/Routing APIs
+    org.hibernate.SQL: WARN       # TẮT log SQL SELECT của Hibernate (Rất nhiều và gây nhiễu log trong Production)
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN # Tắt log binding parameter của Hibernate
+    org.apache.kafka: WARN        # Tắt logs polling liên tục (heartbeat) của Kafka Consumer
+    org.apache.zookeeper: WARN    # Tắt logs duy trì kết nối của Zookeeper
+```
+* **Lợi ích**: Tiết kiệm hàng chục GB dung lượng lưu trữ trên Elasticsearch, giảm tải CPU/RAM cho Filebeat khi không phải đọc và parse hàng triệu dòng log rác.
+
+### 5.2 Loại bỏ logs Health Check của Kubernetes (Liveness/Readiness Probes)
+Kubernetes liên tục gọi vào các endpoint như `/actuator/health`, `/actuator/liveness` của **API Gateway** và các Microservices cứ mỗi 2 - 5 giây/lần. Logs từ các luồng này có thể chiếm đến **70-80%** tổng lượng log của Gateway.
+
+**Giải pháp lọc ở Filebeat Config:**
+Cấu hình Filebeat để bỏ qua hoàn toàn các log dòng chứa chuỗi `/actuator/` hoặc `/health`:
+
+```yaml
+# Thêm cấu hình drop_event vào filebeat.yml hoặc filebeat ConfigMap
+processors:
+  - drop_event:
+      when:
+        or:
+          - contains:
+              message: "/actuator/health"
+          - contains:
+              message: "/actuator/liveness"
+          - contains:
+              message: "/actuator/readiness"
+          - contains:
+              message: "GET /actuator"
+```
+* **Lợi ích**: Kibana sẽ chỉ hiển thị các API nghiệp vụ thực tế được gọi từ người dùng, giúp lập trình viên tìm lỗi nhanh hơn mà không bị ngập trong log kiểm tra sức khỏe của Kubernetes.
+
+### 5.3 Quy ước viết Log trong mã nguồn
+Để logs có giá trị phục vụ debug, nhóm phát triển cần tuân thủ quy tắc:
+* **Log Level ERROR**: Chỉ dùng khi xảy ra lỗi hệ thống (mất kết nối DB, API ngoài bị timeout, lỗi crash logic). **Bắt buộc** kèm theo `exception stacktrace`.
+* **Log Level WARN**: Sử dụng khi nghiệp vụ không diễn ra như mong đợi nhưng không gây treo hệ thống (ví dụ: Sai mật khẩu, token hết hạn, input validation failed).
+* **Log Level INFO**: Sử dụng để ghi nhận các điểm mốc nghiệp vụ (ví dụ: `User [id=123] created order [id=456]`, `Processing payment via VNPAY for order 789`).
+* **Log Level DEBUG/TRACE**: Chỉ bật ở môi trường Local. Tuyệt đối không bật trong môi trường Production/K8s.
+
+---
+
+## 6. Triển khai EFK Stack trên Docker Compose
+
+Bổ sung Kibana và Filebeat vào file [docker-compose.yml](file:///d:/Microservices/P_BookLand_MS/docker-compose.yml) để chạy thử nghiệm local:
 
 ```yaml
   # Kibana — Giao diện hiển thị cho Elasticsearch
@@ -346,7 +395,7 @@ Bổ sung Kibana và Filebeat vào file [docker-compose.yml](file:///d:/Microser
     depends_on:
       - elasticsearch
 
-  # Filebeat — Đi gom file log docker trên máy chủ và đẩy sang Elasticsearch
+  # Filebeat — Gom log từ Docker container và đẩy sang Elasticsearch
   filebeat:
     image: docker.elastic.co/beats/filebeat:8.11.0
     container_name: bookland-filebeat
@@ -368,12 +417,20 @@ filebeat.inputs:
   - type: container
     paths:
       - '/var/lib/docker/containers/*/*.log'
-    # Parse cấu trúc log dạng JSON từ stdout của Spring Boot
+    # Giải mã định dạng JSON
     json.keys_under_root: true
     json.overwrite_keys: true
     json.add_error_key: true
     processors:
       - add_docker_metadata: ~
+      # Bộ lọc loại bỏ logs health check rác
+      - drop_event:
+          when:
+            or:
+              - contains:
+                  message: "/actuator/"
+              - contains:
+                  message: "/health"
 
 output.elasticsearch:
   hosts: ["http://elasticsearch:9200"]
@@ -381,265 +438,13 @@ output.elasticsearch:
 
 setup.template.name: "bookland"
 setup.template.pattern: "bookland-logs-*"
+setup.ilm.enabled: false
 ```
 
 ---
 
-### Phương án B: Tích hợp PLG Stack (Promtail + Loki + Grafana)
+## 7. Triển khai EFK Stack trên Kubernetes (Minikube)
 
-Bổ sung vào file [docker-compose.yml](file:///d:/Microservices/P_BookLand_MS/docker-compose.yml):
+Khi triển khai trên Minikube theo hướng dẫn trong [trienkhai.md](file:///d:/Microservices/P_BookLand_MS/document-microservice/trienkhai_kubenetes/trienkhai.md), chúng ta sẽ tận dụng Pod `elasticsearch-0` trong namespace `bookland` và triển khai thêm Kibana (Deployment) cùng Filebeat (DaemonSet).
 
-```yaml
-  # Loki — Log Database
-  loki:
-    image: grafana/loki:2.9.2
-    container_name: bookland-loki
-    ports:
-      - "3100:3100"
-    command: -config.file=/etc/loki/local-config.yaml
-
-  # Promtail — Agent thu thập log
-  promtail:
-    image: grafana/promtail:2.9.2
-    container_name: bookland-promtail
-    volumes:
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./promtail-config.yml:/etc/promtail/config.yml
-    command: -config.file=/etc/promtail/config.yml
-    depends_on:
-      - loki
-
-  # Grafana — Dashboard phân tích dữ liệu log/metrics
-  grafana:
-    image: grafana/grafana:10.2.2
-    container_name: bookland-grafana
-    ports:
-      - "3000:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-    depends_on:
-      - loki
-```
-
-Tạo file cấu hình `./promtail-config.yml` ở thư mục gốc:
-
-```yaml
-server:
-  http_listen_port: 9080
-  grpc_listen_port: 0
-
-positions:
-  filename: /tmp/positions.yaml
-
-clients:
-  - url: http://loki:3100/loki/api/v1/push
-
-scrape_configs:
-  - job_name: docker-logs
-    docker_sd_configs:
-      - host: unix:///var/run/docker.sock
-        refresh_interval: 5s
-    relabel_configs:
-      - source_labels: ['__meta_docker_container_name']
-        regex: '/(.*)'
-        target_label: 'container'
-```
-
----
-
-## 6. Kế hoạch Triển khai trên Kubernetes (Minikube)
-
-Khi triển khai trên Minikube theo hướng dẫn trong [trienkhai.md](file:///d:/Microservices/P_BookLand_MS/document-microservice/trienkhai_kubenetes/trienkhai.md), chúng ta sẽ tận dụng cụm Elasticsearch có sẵn trên k8s và triển khai Kibana + Filebeat.
-
-### File Manifest 1: Triển khai Kibana (`k8s/01-infrastructure/kibana.yaml`)
-
-Tạo file này để bật giao diện Kibana trong K8s:
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: kibana
-  namespace: bookland
-  labels:
-    app: kibana
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: kibana
-  template:
-    metadata:
-      labels:
-        app: kibana
-    spec:
-      containers:
-        - name: kibana
-          image: docker.elastic.co/kibana/kibana:8.11.0
-          ports:
-            - containerPort: 5601
-              name: ui-port
-          env:
-            - name: ELASTICSEARCH_HOSTS
-              value: "http://elasticsearch:9200"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: kibana
-  namespace: bookland
-spec:
-  ports:
-    - port: 5601
-      targetPort: 5601
-  selector:
-    app: kibana
-```
-
-### File Manifest 2: Triển khai Filebeat DaemonSet (`k8s/01-infrastructure/filebeat.yaml`)
-
-Filebeat chạy dưới dạng **DaemonSet** (mỗi Node vật lý chạy đúng 1 pod) để quét thư mục log `/var/log/containers/*` của Kubernetes.
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: filebeat-config
-  namespace: bookland
-  labels:
-    app: filebeat
-data:
-  filebeat.yml: |-
-    filebeat.inputs:
-    - type: container
-      paths:
-        - /var/log/containers/*.log
-      processors:
-        - add_kubernetes_metadata:
-            host: ${NODE_NAME}
-            matchers:
-            - logs_path:
-                logs_path: "/var/log/containers/"
-
-    # Cấu hình parse log JSON tự động cho các pod trong namespace 'bookland'
-    processors:
-      - decode_json_fields:
-          fields: ["message"]
-          target: ""
-          overwrite_keys: true
-          add_error_key: true
-
-    output.elasticsearch:
-      hosts: ['elasticsearch:9200']
-      index: "bookland-k8s-logs-%{+yyyy.MM.dd}"
-    
-    setup.ilm.enabled: false
-    setup.template.name: "bookland-k8s"
-    setup.template.pattern: "bookland-k8s-*"
----
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: filebeat
-  namespace: bookland
-  labels:
-    app: filebeat
-spec:
-  selector:
-    matchLabels:
-      app: filebeat
-  template:
-    metadata:
-      labels:
-        app: filebeat
-    spec:
-      serviceAccountName: filebeat-service-account # Cần cấp quyền RBAC đọc metadata K8s
-      terminationGracePeriodSeconds: 30
-      hostNetwork: true
-      dnsPolicy: ClusterFirstWithHostNet
-      containers:
-      - name: filebeat
-        image: docker.elastic.co/beats/filebeat:8.11.0
-        args: [
-          "-c", "/etc/filebeat.yml",
-          "-e",
-        ]
-        env:
-        - name: NODE_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
-        securityContext:
-          runAsUser: 0 # Chạy quyền root để đọc log hệ thống
-        resources:
-          limits:
-            memory: 200Mi
-          requests:
-            cpu: 100m
-            memory: 100Mi
-        volumeMounts:
-        - name: config
-          mountPath: /etc/filebeat.yml
-          subPath: filebeat.yml
-          readOnly: true
-        - name: data
-          mountPath: /usr/share/filebeat/data
-        - name: varlog
-          mountPath: /var/log
-          readOnly: true
-        - name: varlibdockercontainers
-          mountPath: /var/lib/docker/containers
-          readOnly: true
-      volumes:
-      - name: config
-        configMap:
-          defaultMode: 0640
-          name: filebeat-config
-      - name: varlog
-        hostPath:
-          path: /var/log
-      - name: varlibdockercontainers
-        hostPath:
-          path: /var/lib/docker/containers
-      - name: data
-        hostPath:
-          path: /var/lib/filebeat-data
-          type: DirectoryOrCreate
-```
-*(Ghi chú: Đi kèm với Filebeat DaemonSet cần có định nghĩa ServiceAccount, ClusterRole và ClusterRoleBinding cấp quyền cho Filebeat lấy thông tin Pod Metadata từ Kubernetes API Server).*
-
----
-
-## 7. Lộ trình Thực hiện Từng bước (Action Plan)
-
-Để triển khai thành công mà không làm ảnh hưởng đến hệ thống hiện tại, hãy làm theo quy trình 4 bước:
-
-### Bước 1: Chuẩn bị mã nguồn Java (Thực hiện trên Windows Host)
-1. Thêm các dependencies `micrometer-tracing` và `logstash-logback-encoder` vào parent [pom.xml](file:///d:/Microservices/P_BookLand_MS/pom.xml).
-2. Tạo file `logback-spring.xml` cho toàn bộ **11 services** tại thư mục `src/main/resources/`.
-3. Bật cấu hình `management.tracing` trong các file `application.yml` của các dịch vụ.
-4. Đẩy (Push) code lên Git (nhánh `dev`) để chuẩn bị đồng bộ sang Ubuntu VM.
-
-### Bước 2: Triển khai thử nghiệm trên Docker Compose
-1. Bổ sung cấu hình Kibana & Filebeat (hoặc PLG stack) vào [docker-compose.yml](file:///d:/Microservices/P_BookLand_MS/docker-compose.yml).
-2. Khởi động hệ thống local:
-   ```bash
-   docker-compose up --build -d
-   ```
-3. Truy cập thử giao diện Kibana tại `http://localhost:5601` (hoặc Grafana `http://localhost:3000`) để kiểm tra xem log của các service đã đổ về đầy đủ hay chưa.
-
-### Bước 3: Đóng gói và cập nhật trên Kubernetes Minikube (Ubuntu VM)
-1. Kéo (Pull) code mới nhất về máy ảo Ubuntu.
-2. Build lại các Docker Images theo hướng dẫn ở giai đoạn 3 của [trienkhai.md](file:///d:/Microservices/P_BookLand_MS/document-microservice/trienkhai_kubenetes/trienkhai.md).
-3. Triển khai hạ tầng logging:
-   ```bash
-   kubectl apply -f k8s/01-infrastructure/kibana.yaml
-   kubectl apply -f k8s/01-infrastructure/filebeat.yaml
-   ```
-4. Cập nhật lại các Stateful/Stateless services trên K8s bằng lệnh `kubectl apply -f k8s/02-services/`.
-
-### Bước 4: Kiểm tra bám vết Trace ID
-1. Thực hiện một cuộc gọi API qua Gateway, ví dụ `POST /api/orders` (tạo đơn hàng).
-2. Kiểm tra log của `api-gateway`, `order-service`, `book-service` và `notification-service`.
-3. Đảm bảo rằng **cùng một Trace ID** xuất hiện trên toàn bộ chuỗi log của các service này trên Kibana/Grafana.
+*Chi tiết các bước cài đặt và tệp cấu hình YAML của Kubernetes (Manifests) được mô tả trong tài liệu quy trình triển khai: [trienkhai_logging.md](file:///d:/Microservices/P_BookLand_MS/document-microservice/advance_feature/centralized_logging/trienkhai_logging.md).*
