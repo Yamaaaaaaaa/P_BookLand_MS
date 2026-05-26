@@ -1,0 +1,109 @@
+/* Admin Layout */
+.admin-layout {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--shop-bg-secondary);
+}
+
+/* Sidebar */
+.admin-sidebar {
+    width: 260px;
+    background-color: var(--shop-bg-card);
+    border-right: 1px solid var(--shop-border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    height: 100vh;
+    z-index: 100;
+}
+
+.admin-sidebar-header {
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--shop-border);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.admin-logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--shop-primary);
+    text-decoration: none;
+}
+
+.admin-nav {
+    flex: 1;
+    padding: var(--spacing-lg) 0;
+    overflow-y: auto;
+}
+
+.admin-nav-group {
+    margin-bottom: var(--spacing-lg);
+}
+
+.admin-nav-title {
+    padding: 0 var(--spacing-lg);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--shop-text-muted);
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+    letter-spacing: 0.05em;
+}
+
+.admin-nav-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    color: var(--shop-text-secondary);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+    font-weight: 500;
+}
+
+.admin-nav-item:hover,
+.admin-nav-item.active {
+    background-color: var(--shop-bg-secondary);
+    color: var(--shop-primary);
+}
+
+.admin-nav-item svg {
+    width: 20px;
+    height: 20px;
+}
+
+.admin-footer {
+    padding: var(--spacing-lg);
+    border-top: 1px solid var(--shop-border);
+}
+
+.admin-logout-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background-color: var(--shop-bg-primary);
+    border: 1px solid var(--shop-border);
+    border-radius: var(--radius-md);
+    color: #d93025;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.admin-logout-btn:hover {
+    background-color: #fee2e2;
+    border-color: #fecaca;
+}
+
+/* Main Content */
+.admin-main {
+    flex: 1;
+    margin-left: 260px; /* Width of sidebar */
+    padding: var(--spacing-xl);
+    max-width: 100%;
+}

@@ -1,0 +1,719 @@
+/* ===========================================
+   SHIPPER PAGES – BookLand Shop Style
+   Uses Shop design tokens from variables.css
+   =========================================== */
+
+/* ────────────────────────────────────────────
+   LOGIN PAGE
+   ──────────────────────────────────────────── */
+.shipper-login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+  padding: 20px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.shipper-login-card {
+  width: 100%;
+  max-width: 460px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  padding: 44px 36px;
+}
+
+/* Header */
+.shipper-login-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.shipper-login-icon {
+  width: 60px;
+  height: 60px;
+  background-color: #FEE2E2;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin: 0 auto 16px;
+}
+
+.shipper-login-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: #2D2D2D;
+  margin: 0 0 6px;
+}
+
+.shipper-login-subtitle {
+  font-size: 14px;
+  color: #6B6B6B;
+  margin: 0;
+}
+
+/* Form */
+.shipper-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.shipper-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shipper-form-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.shipper-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.shipper-input-icon {
+  position: absolute;
+  left: 14px;
+  color: #9A9A9A;
+  font-size: 15px;
+  pointer-events: none;
+}
+
+.shipper-input {
+  width: 100%;
+  padding: 12px 14px 12px 42px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 15px;
+  color: #2D2D2D;
+  background-color: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.shipper-input::placeholder {
+  color: #9CA3AF;
+}
+
+.shipper-input:focus {
+  outline: none;
+  border-color: #C92127;
+  box-shadow: 0 0 0 3px rgba(201, 33, 39, 0.1);
+}
+
+.shipper-toggle-password {
+  position: absolute;
+  right: 14px;
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+}
+.shipper-toggle-password:hover {
+  color: #C92127;
+}
+
+.shipper-submit-btn {
+  margin-top: 8px;
+  padding: 14px;
+  background-color: #C92127;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.15s;
+  letter-spacing: 0.2px;
+}
+
+.shipper-submit-btn:hover:not(:disabled) {
+  background-color: #ab1d22;
+  transform: translateY(-1px);
+}
+
+.shipper-submit-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.shipper-login-error {
+  background-color: #fff5f5;
+  border: 1px solid rgba(201, 33, 39, 0.25);
+  color: #C92127;
+  font-size: 13px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  text-align: center;
+}
+
+/* Responsive – Login */
+@media (max-width: 500px) {
+  .shipper-login-page {
+    padding: 0;
+    background-color: #fff;
+  }
+  .shipper-login-card {
+    box-shadow: none;
+    border-radius: 0;
+    min-height: 100vh;
+    padding: 36px 20px;
+  }
+}
+
+
+/* ────────────────────────────────────────────
+   DASHBOARD
+   ──────────────────────────────────────────── */
+.shipper-dashboard {
+  min-height: 100vh;
+  background-color: #FAF8F5;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #2D2D2D;
+}
+
+/* ── Navbar ── */
+.shipper-navbar {
+  background-color: #C92127;
+  padding: 0 24px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(201, 33, 39, 0.2);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.shipper-navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+  font-family: 'Playfair Display', Georgia, serif;
+  text-decoration: none;
+  letter-spacing: 0.3px;
+}
+
+.shipper-navbar-brand-icon {
+  font-size: 20px;
+  background-color: rgba(255, 255, 255, 0.2);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shipper-navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.shipper-navbar-user {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shipper-logout-btn {
+  padding: 7px 14px;
+  background-color: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.shipper-logout-btn:hover {
+  background-color: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* ── Main Content ── */
+.shipper-main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 24px;
+  box-sizing: border-box;
+}
+
+/* ── Page Header ── */
+.shipper-page-header {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #E8E4DD;
+}
+
+.shipper-page-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: #2D2D2D;
+  margin: 0 0 6px;
+}
+
+.shipper-page-subtitle {
+  font-size: 14px;
+  color: #6B6B6B;
+  margin: 0;
+}
+
+/* ── Stat Cards ── */
+.shipper-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.shipper-stat-card {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border: 1px solid #E8E4DD;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: box-shadow 0.2s;
+}
+.shipper-stat-card:hover {
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.shipper-stat-icon {
+  font-size: 26px;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  background-color: #FEE2E2;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shipper-stat-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.shipper-stat-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: #C92127;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.shipper-stat-label {
+  font-size: 12px;
+  color: #6B6B6B;
+  font-weight: 500;
+}
+
+/* ── Orders Section ── */
+.shipper-orders-section {
+  background-color: #fff;
+  border-radius: 8px;
+  border: 1px solid #E8E4DD;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.shipper-orders-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid #E8E4DD;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background-color: #FAFAFA;
+}
+
+.shipper-orders-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #2D2D2D;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shipper-badge {
+  background-color: #C92127;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 50px;
+}
+
+.shipper-refresh-btn {
+  padding: 7px 14px;
+  background-color: #fff;
+  border: 1px solid #E8E4DD;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6B6B6B;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.shipper-refresh-btn:hover:not(:disabled) {
+  background-color: #F5F0E8;
+  border-color: #C4A77D;
+  color: #2D2D2D;
+}
+.shipper-refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Order Cards ── */
+.shipper-order-list {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.shipper-order-card {
+  border: 1px solid #E8E4DD;
+  border-radius: 8px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background-color: #fff;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.shipper-order-card:hover {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  border-color: #C4A77D;
+}
+
+.shipper-order-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.shipper-order-id {
+  font-size: 15px;
+  font-weight: 700;
+  color: #2D2D2D;
+  margin: 0 0 6px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.shipper-order-meta {
+  font-size: 13px;
+  color: #6B6B6B;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 8px;
+}
+
+.shipper-order-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.shipper-order-books {
+  font-size: 12px;
+  color: #9A9A9A;
+  line-height: 1.5;
+}
+
+.shipper-order-actions {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.shipper-order-cost {
+  font-size: 17px;
+  font-weight: 800;
+  color: #C92127;
+  white-space: nowrap;
+}
+
+.shipper-confirm-btn {
+  padding: 9px 18px;
+  background-color: #C92127;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.15s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.shipper-confirm-btn:hover:not(:disabled) {
+  background-color: #ab1d22;
+  transform: translateY(-1px);
+}
+.shipper-confirm-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Status badge */
+.status-shipping {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  background-color: #FFF5F5;
+  color: #C92127;
+  border: 1px solid rgba(201, 33, 39, 0.2);
+  border-radius: 50px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+/* ── Empty / Loading ── */
+.shipper-empty-state {
+  text-align: center;
+  padding: 64px 20px;
+  color: #9A9A9A;
+}
+
+.shipper-empty-icon {
+  font-size: 52px;
+  margin-bottom: 14px;
+}
+
+.shipper-empty-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2D2D2D;
+  margin: 0 0 6px;
+}
+
+.shipper-empty-sub {
+  font-size: 13px;
+  color: #9A9A9A;
+  margin: 0;
+}
+
+.shipper-loading {
+  text-align: center;
+  padding: 64px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  color: #6B6B6B;
+  font-size: 14px;
+}
+
+.shipper-spinner {
+  width: 34px;
+  height: 34px;
+  border: 3px solid #E8E4DD;
+  border-top-color: #C92127;
+  border-radius: 50%;
+  animation: shipperSpin 0.7s linear infinite;
+}
+
+@keyframes shipperSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Pagination ── */
+.shipper-pagination {
+  padding: 16px 24px;
+  border-top: 1px solid #E8E4DD;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #6B6B6B;
+  background-color: #FAFAFA;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.shipper-pagination-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.shipper-pagination-btn {
+  padding: 7px 16px;
+  background-color: #fff;
+  border: 1px solid #E8E4DD;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #2D2D2D;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.shipper-pagination-btn:hover:not(:disabled) {
+  background-color: #C92127;
+  border-color: #C92127;
+  color: #fff;
+}
+.shipper-pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ────────────────────────────────────────────
+   RESPONSIVE
+   ──────────────────────────────────────────── */
+
+/* Tablet – 1024px */
+@media (max-width: 1024px) {
+  .shipper-main {
+    padding: 24px 16px;
+  }
+  .shipper-stats {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+}
+
+/* Tablet – 768px */
+@media (max-width: 768px) {
+  .shipper-navbar {
+    padding: 0 16px;
+    height: 56px;
+  }
+  .shipper-navbar-brand {
+    font-size: 15px;
+  }
+  .shipper-navbar-user {
+    display: none; /* ẩn email trên mobile nhỏ */
+  }
+  .shipper-main {
+    padding: 20px 14px;
+  }
+  .shipper-page-title {
+    font-size: 22px;
+  }
+  .shipper-stats {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .shipper-stat-card {
+    padding: 14px;
+    gap: 10px;
+  }
+  .shipper-stat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+  .shipper-stat-value {
+    font-size: 22px;
+  }
+  .shipper-orders-header {
+    padding: 14px 16px;
+  }
+  .shipper-order-list {
+    padding: 12px;
+    gap: 10px;
+  }
+  .shipper-order-card {
+    padding: 14px 16px;
+  }
+}
+
+/* Mobile – 600px */
+@media (max-width: 600px) {
+  .shipper-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+  .shipper-stat-card:last-child {
+    grid-column: 1 / -1; /* span full width */
+  }
+
+  .shipper-order-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .shipper-order-actions {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .shipper-pagination {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
+
+/* Mobile – 400px */
+@media (max-width: 400px) {
+  .shipper-stats {
+    grid-template-columns: 1fr;
+  }
+  .shipper-stat-card:last-child {
+    grid-column: 1;
+  }
+  .shipper-logout-btn span:first-child {
+    display: none; /* ẩn icon logout trên màn hình rất nhỏ */
+  }
+  .shipper-navbar-brand {
+    font-size: 14px;
+  }
+}

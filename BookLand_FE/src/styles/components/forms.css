@@ -1,0 +1,135 @@
+/* ===========================================
+   FORM COMPONENTS
+   =========================================== */
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  width: 100%;
+}
+
+.form-group__label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--shop-text-secondary);
+  margin-bottom: 2px;
+}
+
+.form-group__input {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 0.95rem;
+  border: 1px solid var(--shop-border);
+  border-radius: var(--radius-md);
+  background-color: var(--shop-bg-primary);
+  color: var(--shop-text-primary);
+  transition: border-color var(--transition-fast);
+  box-sizing: border-box;
+}
+
+.form-group__input::placeholder {
+  color: var(--shop-text-muted);
+}
+
+.form-group__input:focus {
+  outline: none;
+  border-color: var(--shop-accent-primary);
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1.5rem;
+  padding-top: 1.5rem;
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--shop-border);
+}
+
+.form-actions button {
+  min-width: 120px;
+  justify-content: center;
+}
+
+/* Quantity Selector */
+.quantity-selector {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--shop-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.quantity-selector__btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background-color: var(--shop-bg-secondary);
+  color: var(--shop-text-primary);
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.quantity-selector__btn:hover {
+  background-color: var(--shop-border);
+}
+
+.quantity-selector__value {
+  width: 48px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--shop-text-primary);
+}
+
+/* Dynamic Form Sections */
+.form-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background-color: #ffffff;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--shop-border);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--shop-text-primary);
+  margin: 0;
+}
+
+.dynamic-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px dashed var(--shop-border);
+}
+
+.dynamic-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.empty-text {
+  text-align: center;
+  color: var(--shop-text-muted);
+  font-style: italic;
+  padding: 1rem 0;
+}

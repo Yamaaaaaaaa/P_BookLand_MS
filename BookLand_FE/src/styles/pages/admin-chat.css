@@ -1,0 +1,334 @@
+/* Admin Chat Page Styles */
+.admin-chat-page {
+    display: flex;
+    height: calc(100vh - 60px);
+    background: #F8F9FA;
+}
+
+/* Sidebar */
+.admin-chat-sidebar {
+    width: 350px;
+    background: white;
+    border-right: 1px solid #E5E7EB;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-chat-sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.admin-chat-sidebar-header h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: #1F2937;
+}
+
+.admin-chat-search {
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.admin-chat-search svg {
+    color: #9CA3AF;
+}
+
+.admin-chat-search input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    color: #1F2937;
+}
+
+.admin-chat-search input::placeholder {
+    color: #9CA3AF;
+}
+
+.admin-chat-conversations {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.admin-chat-conversation-item {
+    padding: 16px;
+    display: flex;
+    gap: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-bottom: 1px solid #F3F4F6;
+}
+
+.admin-chat-conversation-item:hover {
+    background: #F9FAFB;
+}
+
+.admin-chat-conversation-item.active {
+    background: #FEF2F2;
+    border-left: 3px solid #C92127;
+}
+
+.admin-chat-conversation-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #C92127 0%, #E63946 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.admin-chat-conversation-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.admin-chat-conversation-name {
+    font-weight: 600;
+    color: #1F2937;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-chat-unread-badge {
+    background: #C92127;
+    color: white;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.admin-chat-conversation-preview {
+    font-size: 13px;
+    color: #6B7280;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Main Chat Area */
+.admin-chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: white;
+}
+
+.admin-chat-header {
+    padding: 20px;
+    border-bottom: 1px solid #E5E7EB;
+    background: white;
+}
+
+.admin-chat-header-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.admin-chat-header-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #C92127 0%, #E63946 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 18px;
+}
+
+.admin-chat-header-name {
+    font-weight: 600;
+    font-size: 16px;
+    color: #1F2937;
+}
+
+.admin-chat-header-email {
+    font-size: 13px;
+    color: #6B7280;
+}
+
+.admin-chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background: #F8F9FA;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.admin-chat-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #666;
+}
+
+.admin-chat-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #999;
+    text-align: center;
+}
+
+.admin-chat-empty svg {
+    color: #DDD;
+    margin-bottom: 16px;
+}
+
+.admin-chat-empty p {
+    margin: 4px 0;
+    font-weight: 600;
+}
+
+.admin-chat-message {
+    display: flex;
+    flex-direction: column;
+    max-width: 65%;
+    animation: slideIn 0.2s ease;
+}
+
+.admin-chat-message-sent {
+    align-self: flex-end;
+}
+
+.admin-chat-message-received {
+    align-self: flex-start;
+}
+
+.admin-chat-message-content {
+    padding: 12px 16px;
+    border-radius: 12px;
+    word-wrap: break-word;
+    line-height: 1.5;
+}
+
+.admin-chat-message-sent .admin-chat-message-content {
+    background: linear-gradient(135deg, #C92127 0%, #E63946 100%);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.admin-chat-message-received .admin-chat-message-content {
+    background: white;
+    color: #333;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.admin-chat-message-time {
+    font-size: 11px;
+    color: #999;
+    margin-top: 4px;
+    padding: 0 4px;
+}
+
+.admin-chat-message-sent .admin-chat-message-time {
+    text-align: right;
+}
+
+.admin-chat-input-container {
+    padding: 20px;
+    background: white;
+    border-top: 1px solid #E5E7EB;
+    display: flex;
+    gap: 12px;
+}
+
+.admin-chat-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid #E5E7EB;
+    border-radius: 24px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.admin-chat-input:focus {
+    border-color: #C92127;
+}
+
+.admin-chat-send-button {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #C92127 0%, #E63946 100%);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.admin-chat-send-button:hover:not(:disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(201, 33, 39, 0.3);
+}
+
+.admin-chat-send-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.admin-chat-no-selection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #999;
+}
+
+.admin-chat-no-selection svg {
+    color: #DDD;
+    margin-bottom: 16px;
+}
+
+.admin-chat-no-selection p {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* Scrollbar */
+.admin-chat-conversations::-webkit-scrollbar,
+.admin-chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.admin-chat-conversations::-webkit-scrollbar-track,
+.admin-chat-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.admin-chat-conversations::-webkit-scrollbar-thumb,
+.admin-chat-messages::-webkit-scrollbar-thumb {
+    background: #CCC;
+    border-radius: 3px;
+}
+
+.admin-chat-conversations::-webkit-scrollbar-thumb:hover,
+.admin-chat-messages::-webkit-scrollbar-thumb:hover {
+    background: #AAA;
+}

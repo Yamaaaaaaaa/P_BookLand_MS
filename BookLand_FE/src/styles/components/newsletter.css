@@ -1,0 +1,135 @@
+
+.newsletter-section {
+  padding: 24px 0;
+  background-color: #f0f0f0; /* Consistent light gray page background */
+}
+
+.newsletter-container {
+  max-width: 1380px;
+  margin: 0 auto;
+  padding: 40px 16px; /* Align with other sections' 16px horizontal padding */
+  background-color: white;
+  border-radius: 8px;
+}
+
+.newsletter-inner {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 60px;
+  align-items: center;
+  max-width: 1200px; /* Internal content width */
+  margin: 0 auto;
+}
+
+.newsletter-content {
+  max-width: 600px;
+}
+
+.newsletter-title {
+  font-family: var(--font-display, 'Inter', sans-serif);
+  font-size: 32px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 16px;
+  line-height: 1.2;
+}
+
+.newsletter-description {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+
+.newsletter-form-group {
+  display: flex;
+  gap: 12px;
+  max-width: 500px;
+}
+
+.newsletter-email-input {
+  flex: 1;
+  padding: 14px 20px;
+  font-size: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  transition: all 0.2s;
+}
+
+.newsletter-email-input:focus {
+  outline: none;
+  border-color: #C92127;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(201, 33, 39, 0.1);
+}
+
+.newsletter-submit-btn {
+  padding: 14px 40px;
+  background-color: #C92127; /* Changed to red background */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.newsletter-submit-btn:hover {
+  background-color: #a81b21; /* Darker red on hover */
+  transform: translateY(-2px);
+}
+
+.newsletter-image-box {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.newsletter-image-box img {
+  width: 100%;
+  max-width: 400px;
+  height: 280px;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 1024px) {
+  .newsletter-inner {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    text-align: center;
+  }
+
+  .newsletter-content {
+    max-width: 100%;
+  }
+
+  .newsletter-form-group {
+    margin: 0 auto;
+  }
+
+  .newsletter-image-box {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .newsletter-container {
+    padding: 30px 20px;
+  }
+
+  .newsletter-title {
+    font-size: 26px;
+  }
+
+  .newsletter-form-group {
+    flex-direction: column;
+  }
+
+  .newsletter-submit-btn {
+    width: 100%;
+  }
+}

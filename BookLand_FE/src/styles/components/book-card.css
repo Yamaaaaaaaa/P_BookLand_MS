@@ -1,0 +1,315 @@
+/* ===========================================
+   BOOK CARD
+   =========================================== */
+
+.book-card {
+  background-color: #fff;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  position: relative;
+  border: 1px solid transparent; /* No border by default */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+}
+
+.book-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.13);
+  border-color: #eee;
+  transform: translateY(-2px);
+}
+
+.book-card__image-wrapper {
+  position: relative;
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  background-color: #fff;
+}
+
+.book-card__image {
+  width: auto;
+  max-width: 100%;
+  height: 180px;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.book-card:hover .book-card__image {
+  transform: scale(1.04);
+}
+
+/* Badges (Top Left) */
+.book-card__badges {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 2;
+}
+
+.badge-bestseller {
+  background-color: #f39801;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.badge-new {
+  background-color: #c92127;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.icon-fire {
+  font-size: 10px;
+}
+
+/* Series/Tag Banner (Top Left) */
+.book-card__series-tag {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background-color: #00a651;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 2px;
+  text-transform: uppercase;
+  z-index: 1; /* Behind other badges if they overlap, though in image they occupy same slot */
+}
+
+/* If both series and badges exist, shift badges down or series up */
+.book-card__series-tag + .book-card__badges {
+  top: 30px;
+}
+
+/* Volume Badge (Bottom Right of Image) */
+.book-card__volume-badge {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background-color: rgba(0, 0, 0, 0.9);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  z-index: 2;
+}
+
+.book-card__content {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-grow: 1;
+}
+
+.book-card__title {
+  font-size: 13px;
+  font-weight: 400;
+  color: #333;
+  line-height: 1.4;
+  margin: 0;
+  height: 38px; /* Approx 2 lines */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.book-card__price-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.book-card__price-final {
+  color: #c92127;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.book-card__action-btn:hover {
+  background-color: #c92127;
+  color: #fff;
+  border-color: #c92127;
+}
+
+/* LIST VIEW OVERRIDES */
+.book-card--list {
+  flex-direction: row;
+  padding: 15px;
+  gap: 20px;
+}
+
+.book-card--list .book-card__image-wrapper {
+  width: 180px;
+  min-height: 180px;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.book-card--list .book-card__content {
+  padding: 0;
+  gap: 12px;
+}
+
+.book-card--list .book-card__title {
+  font-size: 16px;
+  height: auto;
+  -webkit-line-clamp: 1;
+}
+
+.book-card__details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.book-card__author {
+  font-size: 13px;
+  color: #666;
+}
+
+.book-card__description {
+  font-size: 13px;
+  color: #777;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.5;
+}
+
+.book-card__actions-list {
+  display: flex;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.btn-add-cart-list {
+  background-color: #fff;
+  color: #c92127;
+  border: 2px solid #c92127;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-add-cart-list:hover {
+  background-color: #fbe9ea;
+}
+
+.btn-buy-now-list {
+  background-color: #c92127;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-buy-now-list:hover {
+  background-color: #ab1d22;
+}
+
+/* BookGrid List overrides */
+.book-grid--list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.book-card__discount {
+  background-color: #c92127;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+.book-card__price-original {
+  font-size: 12px;
+  color: #999;
+  text-decoration: line-through;
+  margin-top: -4px;
+}
+
+.book-card__rating {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.book-card__stars {
+  display: flex;
+  color: #ebebeb; /* Small light grey stars */
+}
+
+.book-card__stars .lucide-star {
+  width: 12px;
+  height: 12px;
+}
+
+.book-card__rating-count {
+  font-size: 11px;
+  color: #999;
+}
+
+/* Actions (Hidden by default, shown on hover if needed, or matched to Fahasa which doesn't usually show them like this) */
+.book-card__actions {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 5;
+}
+
+.book-card:hover .book-card__actions {
+  opacity: 1;
+}
+
+.book-card__action-btn {
+  width: 32px;
+  height: 32px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
