@@ -37,6 +37,13 @@ const ProfilePage = () => {
         dob: '',
     });
 
+    const [errors, setErrors] = useState({
+        firstName: '',
+        lastName: '',
+        phone: '',
+        dob: '',
+    });
+
     const [passwordForm, setPasswordForm] = useState({
         oldPassword: '',
         newPassword: '',
@@ -73,17 +80,79 @@ const ProfilePage = () => {
 
 
 
+    const validateForm = () => {
+        const newErrors = {
+            firstName: '',
+            lastName: '',
+            phone: '',
+            dob: '',
+        };
+        let isValid = true;
+
+        // Validation for Tên (First Name)
+        if (!profileForm.firstName.trim()) {
+            newErrors.firstName = 'Tên không được để trống';
+            isValid = false;
+        } else if (/[0-9!@#$%^&*(),.?":{}|<>]/.test(profileForm.firstName)) {
+            newErrors.firstName = 'Tên không được chứa số hoặc ký tự đặc biệt';
+            isValid = false;
+        }
+
+        // Validation for Họ (Last Name)
+        if (!profileForm.lastName.trim()) {
+            newErrors.lastName = 'Họ không được để trống';
+            isValid = false;
+        } else if (/[0-9!@#$%^&*(),.?":{}|<>]/.test(profileForm.lastName)) {
+            newErrors.lastName = 'Họ không được chứa số hoặc ký tự đặc biệt';
+            isValid = false;
+        }
+
+        // Validation for Phone Number (Optional)
+        if (profileForm.phone.trim()) {
+            const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
+            if (!phoneRegex.test(profileForm.phone.trim())) {
+                newErrors.phone = 'Số điện thoại không hợp lệ (phải gồm 10 số, bắt đầu bằng 03, 05, 07, 08, 09)';
+                isValid = false;
+            }
+        }
+
+        // Validation for Date of Birth (Optional)
+        if (profileForm.dob) {
+            const birthDate = new Date(profileForm.dob);
+            const today = new Date();
+            
+            if (birthDate > today) {
+                newErrors.dob = 'Ngày sinh không được ở tương lai';
+                isValid = false;
+            } else {
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const m = today.getMonth() - birthDate.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                if (age < 18) {
+                    newErrors.dob = 'Bạn phải từ 18 tuổi trở lên';
+                    isValid = false;
+                }
+            }
+        }
+
+        setErrors(newErrors);
+        return isValid;
+    };
+
     const handleUpdateProfile = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!userId) return;
+        if (!validateForm()) return;
 
         setIsProcessing(true);
         try {
-            const response = await userService.updateUser(userId, {
+            const response = await userService.updateOwnProfile({
                 firstName: profileForm.firstName.trim(),
                 lastName: profileForm.lastName.trim(),
                 phone: profileForm.phone.trim(),
-                dob: profileForm.dob,
+                dob: profileForm.dob ? profileForm.dob.split('T')[0] : undefined,
             });
             if (response.result) {
                 setUserData(response.result);
@@ -226,34 +295,55 @@ const ProfilePage = () => {
                             <div className="profile-form-section">
                                 <h2 className="section-title">{t('profile.profile_tab_title')}</h2>
                                 <form className="profile-form" onSubmit={handleUpdateProfile}>
-                                    <div className="form-group-row">
-                                        <label>{t('profile.first_name')}</label>
-                                        <input
-                                            type="text"
-                                            value={profileForm.firstName}
-                                            onChange={(e) => setProfileForm({ ...profileForm, firstName: e.target.value })}
-                                            placeholder={t('profile.enter_first_name')}
-                                            required
-                                        />
+                                                                    <div className="form-group-row">
+                                        <label>{t('profile.first_name')}*</label>
+                                        <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                                            <input
+                                                type="text"
+                                                value={profileForm.firstName}
+                                                onChange={(e) => {
+                                                    setProfileForm({ ...profileForm, firstName: e.target.value });
+                                                    setErrors({ ...errors, firstName: '' });
+                                                }}
+                                                placeholder={t('profile.enter_first_name')}
+                                                style={{ borderColor: errors.firstName ? '#C92127' : '#ddd' }}
+                                                required
+                                            />
+                                            {errors.firstName && <span style={{ color: '#C92127', fontSize: '11px', marginTop: '4px' }}>{errors.firstName}</span>}
+                                        </div>
                                     </div>
                                     <div className="form-group-row">
-                                        <label>{t('profile.last_name')}</label>
-                                        <input
-                                            type="text"
-                                            value={profileForm.lastName}
-                                            onChange={(e) => setProfileForm({ ...profileForm, lastName: e.target.value })}
-                                            placeholder={t('profile.enter_last_name')}
-                                            required
-                                        />
+                                        <label>{t('profile.last_name')}*</label>
+                                        <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                                            <input
+                                                type="text"
+                                                value={profileForm.lastName}
+                                                onChange={(e) => {
+                                                    setProfileForm({ ...profileForm, lastName: e.target.value });
+                                                    setErrors({ ...errors, lastName: '' });
+                                                }}
+                                                placeholder={t('profile.enter_last_name')}
+                                                style={{ borderColor: errors.lastName ? '#C92127' : '#ddd' }}
+                                                required
+                                            />
+                                            {errors.lastName && <span style={{ color: '#C92127', fontSize: '11px', marginTop: '4px' }}>{errors.lastName}</span>}
+                                        </div>
                                     </div>
                                     <div className="form-group-row">
                                         <label>{t('profile.phone')}</label>
-                                        <input
-                                            type="text"
-                                            value={profileForm.phone}
-                                            onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                                            placeholder={t('profile.enter_phone')}
-                                        />
+                                        <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                                            <input
+                                                type="text"
+                                                value={profileForm.phone}
+                                                onChange={(e) => {
+                                                    setProfileForm({ ...profileForm, phone: e.target.value });
+                                                    setErrors({ ...errors, phone: '' });
+                                                }}
+                                                placeholder={t('profile.enter_phone')}
+                                                style={{ borderColor: errors.phone ? '#C92127' : '#ddd' }}
+                                            />
+                                            {errors.phone && <span style={{ color: '#C92127', fontSize: '11px', marginTop: '4px' }}>{errors.phone}</span>}
+                                        </div>
                                     </div>
                                     <div className="form-group-row">
                                         <label>Email</label>
@@ -261,17 +351,23 @@ const ProfilePage = () => {
                                             type="email"
                                             value={profileForm.email}
                                             disabled
-                                            style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                                            style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed', border: '1px solid #ddd' }}
                                         />
                                     </div>
                                     <div className="form-group-row">
                                         <label>{t('profile.dob')}</label>
-                                        <input
-                                            type="date"
-                                            value={profileForm.dob ? profileForm.dob.split('T')[0] : ''}
-                                            onChange={(e) => setProfileForm({ ...profileForm, dob: e.target.value })}
-                                            style={{ height: '36px', padding: '0 12px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px' }}
-                                        />
+                                        <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                                            <input
+                                                type="date"
+                                                value={profileForm.dob ? profileForm.dob.split('T')[0] : ''}
+                                                onChange={(e) => {
+                                                    setProfileForm({ ...profileForm, dob: e.target.value });
+                                                    setErrors({ ...errors, dob: '' });
+                                                }}
+                                                style={{ height: '36px', padding: '0 12px', border: '1px solid ' + (errors.dob ? '#C92127' : '#ddd'), borderRadius: '4px', fontSize: '13px' }}
+                                            />
+                                            {errors.dob && <span style={{ color: '#C92127', fontSize: '11px', marginTop: '4px' }}>{errors.dob}</span>}
+                                        </div>
                                     </div>
                                     <div className="form-actions">
                                         <button type="submit" className="btn-save-profile" disabled={isProcessing}>

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import com.bookland.identity.entity.User;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, String> {
+public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);
 

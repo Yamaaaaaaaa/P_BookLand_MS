@@ -55,7 +55,7 @@ public class UserController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_MANAGER')")
-    public ApiResponse<UserResponse> getUserById(@PathVariable String id) {
+    public ApiResponse<UserResponse> getUserById(@PathVariable Long id) {
         UserResponse user = userService.getUserById(id);
         return ApiResponse.<UserResponse>builder().result(user).build();
     }
@@ -69,7 +69,7 @@ public class UserController {
 
     @PutMapping("/{id}")
     public ApiResponse<UserResponse> updateUser(
-            @PathVariable String id,
+            @PathVariable Long id,
             @Valid @RequestBody UserUpdateRequest request
     ) {
         UserResponse updatedUser = userService.updateUser(id, request);
@@ -78,7 +78,7 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    public ApiResponse<Void> deleteUser(@PathVariable String id) {
+    public ApiResponse<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ApiResponse.<Void>builder().build();
     }

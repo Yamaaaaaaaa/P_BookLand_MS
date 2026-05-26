@@ -37,7 +37,10 @@ const userService = {
     
     // Customer own profile
     getOwnProfile: () => {
-        return axiosClient.get<any, ApiResponse<User>>('/api/users/me');
+        return axiosClient.get<any, ApiResponse<User>>('/users/my-profile');
+    },
+    updateOwnProfile: (data: UserUpdateRequest) => {
+        return axiosClient.put<any, ApiResponse<User>>('/users/my-profile', data);
     },
     
     // Admin specific endpoints (mapping to /admin/users based on docs, though some seem duplicate)

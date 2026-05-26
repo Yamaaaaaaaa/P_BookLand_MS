@@ -46,7 +46,7 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public UserResponse getUserById(String id) {
+    public UserResponse getUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         return userMapper.toUserResponse(user);
@@ -100,7 +100,7 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponse updateUser(String id, UserUpdateRequest request) {
+    public UserResponse updateUser(Long id, UserUpdateRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
@@ -132,7 +132,7 @@ public class UserService {
     }
 
     @Transactional
-    public void deleteUser(String id) {
+    public void deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
             throw new AppException(ErrorCode.USER_NOT_EXISTED);
         }
