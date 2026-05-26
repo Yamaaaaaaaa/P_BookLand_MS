@@ -248,6 +248,10 @@ services:
       - BOOK_SERVICE_HOST=book-service
       - USER_SERVICE_HOST=user-service
       - EVENT_SERVICE_HOST=event-service
+      - VNP_TMN_CODE=${VNP_TMN_CODE}
+      - VNP_SECRET_KEY=${VNP_SECRET_KEY}
+      - VNP_PAY_URL=${VNP_PAY_URL}
+      - VNP_RETURN_URL=${VNP_RETURN_URL}
     depends_on:
       - order-db
       - kafka

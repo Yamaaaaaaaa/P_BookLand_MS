@@ -49,6 +49,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
             "/file-service/v3/api-docs",
             "/notification-service/v3/api-docs",
             "/order-service/v3/api-docs",
+            "/vnpay/.*",
             // "/api/books/.*",
             // "/api/authors/.*",
             // "/api/categories/.*",

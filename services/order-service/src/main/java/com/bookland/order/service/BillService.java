@@ -13,16 +13,22 @@ import com.bookland.order.entity.Bill.BillStatus;
 import com.bookland.order.entity.BillBook;
 import com.bookland.order.entity.PaymentMethod;
 import com.bookland.order.entity.ShippingMethod;
+import com.bookland.order.entity.PaymentTransaction;
+import com.bookland.order.config.VnpayConfig;
 import com.bookland.order.exception.AppException;
 import com.bookland.order.exception.ErrorCode;
 import com.bookland.order.producer.NotificationProducer;
 import com.bookland.order.repository.BillBookRepository;
 import com.bookland.order.repository.BillRepository;
 import com.bookland.order.repository.PaymentMethodRepository;
+import com.bookland.order.repository.PaymentTransactionRepository;
 import com.bookland.order.repository.ShippingMethodRepository;
 import com.bookland.order.repository.specification.BillSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import java.net.URLEncoder;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -40,6 +46,7 @@ public class BillService {
     private final BillRepository billRepository;
     private final BillBookRepository billBookRepository;
     private final PaymentMethodRepository paymentMethodRepository;
+    private final PaymentTransactionRepository paymentTransactionRepository;
     private final ShippingMethodRepository shippingMethodRepository;
     private final BookClient bookClient;
     private final EventClient eventClient;
@@ -570,6 +577,139 @@ public class BillService {
                 .build();
 
         notificationProducer.sendNotification(event);
+    }
+
+    @Transactional
+    public String createOnlinePaymentUrl(Long billId, String bankCode, String ipAddr) {
+        Bill bill = billRepository.findById(billId)
+                .orElseThrow(() -> new AppException(ErrorCode.BILL_NOT_FOUND));
+
+        String vnp_TxnRef = VnpayConfig.getRandomNumber(8);
+        long amount = (long) (bill.getTotalCost() * 100);
+
+        PaymentMethod paymentMethod = bill.getPaymentMethod();
+        if (paymentMethod == null) {
+            paymentMethod = paymentMethodRepository.findByProviderCode("VNPAY")
+                    .orElseGet(() -> {
+                        PaymentMethod newMethod = PaymentMethod.builder()
+                                .name("VNPay Online Payment")
+                                .providerCode("VNPAY")
+                                .isOnline(true)
+                                .description("VNPay payment gateway")
+                                .build();
+                        return paymentMethodRepository.save(newMethod);
+                    });
+        }
+
+        PaymentTransaction transaction = PaymentTransaction.builder()
+                .bill(bill)
+                .paymentMethod(paymentMethod)
+                .provider("VNPAY")
+                .amount(bill.getTotalCost())
+                .transactionCode(vnp_TxnRef)
+                .status(PaymentTransaction.TransactionStatus.PENDING)
+                .build();
+        paymentTransactionRepository.save(transaction);
+
+        Map<String, String> vnp_Params = new HashMap<>();
+        vnp_Params.put("vnp_Version", VnpayConfig.vnp_Version);
+        vnp_Params.put("vnp_Command", "pay");
+        vnp_Params.put("vnp_TmnCode", VnpayConfig.vnp_TmnCode);
+        vnp_Params.put("vnp_Amount", String.valueOf(amount));
+        vnp_Params.put("vnp_CurrCode", "VND");
+
+        if (bankCode != null && !bankCode.isEmpty()) {
+            vnp_Params.put("vnp_BankCode", bankCode);
+        }
+        vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
+        vnp_Params.put("vnp_OrderInfo", "Thanh toan don hang:" + bill.getId());
+        vnp_Params.put("vnp_OrderType", "other");
+        vnp_Params.put("vnp_ReturnUrl", VnpayConfig.vnp_ReturnUrl);
+        vnp_Params.put("vnp_Locale", "vn");
+        vnp_Params.put("vnp_IpAddr", ipAddr);
+
+        Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+        java.text.SimpleDateFormat formatter = new java.text.SimpleDateFormat("yyyyMMddHHmmss");
+        formatter.setTimeZone(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+        String vnp_CreateDate = formatter.format(cld.getTime());
+        vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
+
+        cld.add(Calendar.MINUTE, 15);
+        String vnp_ExpireDate = formatter.format(cld.getTime());
+        vnp_Params.put("vnp_ExpireDate", vnp_ExpireDate);
+
+        List<String> fieldNames = new ArrayList<>(vnp_Params.keySet());
+        Collections.sort(fieldNames);
+        StringBuilder hashData = new StringBuilder();
+        StringBuilder query = new StringBuilder();
+        Iterator<String> itr = fieldNames.iterator();
+        while (itr.hasNext()) {
+            String fieldName = itr.next();
+            String fieldValue = vnp_Params.get(fieldName);
+            if ((fieldValue != null) && (fieldValue.length() > 0)) {
+                hashData.append(fieldName);
+                hashData.append('=');
+                try {
+                    hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
+                    query.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII.toString()));
+                    query.append('=');
+                    query.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
+                } catch (UnsupportedEncodingException e) {
+                    log.error("Failed to encode VNPAY parameter", e);
+                }
+                if (itr.hasNext()) {
+                    query.append('&');
+                    hashData.append('&');
+                }
+            }
+        }
+        String queryUrl = query.toString();
+        String vnp_SecureHash = VnpayConfig.hmacSHA512(VnpayConfig.secretKey, hashData.toString());
+        queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
+        return VnpayConfig.vnp_PayUrl + "?" + queryUrl;
+    }
+
+    @Transactional
+    public PaymentTransactionDTO completeOnlinePayment(String transactionCode, String responseCode, String providerTransactionId, String responseMessage) {
+        PaymentTransactionDTO result = new PaymentTransactionDTO();
+
+        PaymentTransaction transaction = paymentTransactionRepository.findByTransactionCode(transactionCode)
+                .orElse(null);
+
+        if (transaction == null) {
+            result.setStatus("NO");
+            result.setMessage("Transaction not found");
+            return result;
+        }
+
+        transaction.setResponseCode(responseCode);
+        transaction.setResponseMessage(responseMessage);
+        transaction.setProviderTransactionId(providerTransactionId);
+
+        if ("00".equals(responseCode)) {
+            transaction.setStatus(PaymentTransaction.TransactionStatus.SUCCESS);
+            transaction.setPaidAt(LocalDateTime.now());
+
+            Bill bill = transaction.getBill();
+            if (bill != null) {
+                bill.setStatus(BillStatus.APPROVED);
+                bill.setApprovedAt(LocalDateTime.now());
+                bill.setPaymentStatus("SUCCESS");
+                billRepository.save(bill);
+
+                sendOrderStatusUpdateNotification(bill);
+            }
+
+            result.setStatus("OK");
+            result.setMessage("Successfully");
+        } else {
+            transaction.setStatus(PaymentTransaction.TransactionStatus.FAILED);
+            result.setStatus("NO");
+            result.setMessage("Failed");
+        }
+
+        paymentTransactionRepository.save(transaction);
+        return result;
     }
 
     // ──────────────────────────────────────────────────────────────────────────
