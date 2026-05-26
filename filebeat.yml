@@ -1,0 +1,26 @@
+filebeat.inputs:
+  - type: container
+    paths:
+      - '/var/lib/docker/containers/*/*.log'
+    # Giải mã định dạng JSON
+    json.keys_under_root: true
+    json.overwrite_keys: true
+    json.add_error_key: true
+    processors:
+      - add_docker_metadata: ~
+      # Bộ lọc loại bỏ logs health check rác
+      - drop_event:
+          when:
+            or:
+              - contains:
+                  message: "/actuator/"
+              - contains:
+                  message: "/health"
+
+output.elasticsearch:
+  hosts: ["http://elasticsearch:9200"]
+  index: "bookland-logs-%{+yyyy.MM.dd}"
+
+setup.template.name: "bookland"
+setup.template.pattern: "bookland-logs-*"
+setup.ilm.enabled: false

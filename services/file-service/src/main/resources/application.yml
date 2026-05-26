@@ -19,3 +19,21 @@ supabase:
   url: ${SUPABASE_URL}
   service-key: ${SUPABASE_KEY}
   bucket: ${SUPABASE_BUCKET}
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+    enabled: true
+  propagation:
+    type: w3c
+
+logging:
+  level:
+    root: WARN
+    com.bookland: INFO
+    org.springframework: WARN
+    org.springframework.web: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    org.apache.kafka: WARN
+    org.apache.zookeeper: WARN

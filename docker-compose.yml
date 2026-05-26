@@ -146,6 +146,31 @@ services:
     volumes:
       - es_data:/usr/share/elasticsearch/data
 
+  # Kibana — Giao diện hiển thị cho Elasticsearch
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: bookland-kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+
+  # Filebeat — Gom log từ Docker container và đẩy sang Elasticsearch
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.11.0
+    container_name: bookland-filebeat
+    user: root
+    volumes:
+      # Mount thư mục log container của Docker engine trên host
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Cấu hình filebeat
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+    depends_on:
+      - elasticsearch
+
   # MinIO (File Storage — self-hosted S3)
   minio:
     image: minio/minio:latest

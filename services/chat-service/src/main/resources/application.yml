@@ -17,6 +17,10 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
   kafka:
+    listener:
+      observation-enabled: true
+    template:
+      observation-enabled: true
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -29,3 +33,21 @@ spring:
 services:
   user-service:
     url: http://${USER_SERVICE_HOST:localhost}:8082
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+    enabled: true
+  propagation:
+    type: w3c
+
+logging:
+  level:
+    root: WARN
+    com.bookland: INFO
+    org.springframework: WARN
+    org.springframework.web: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    org.apache.kafka: WARN
+    org.apache.zookeeper: WARN

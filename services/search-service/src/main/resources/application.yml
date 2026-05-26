@@ -9,6 +9,10 @@ spring:
     username: ${SPRING_ELASTICSEARCH_USERNAME:}
     password: ${SPRING_ELASTICSEARCH_PASSWORD:}
   kafka:
+    listener:
+      observation-enabled: true
+    template:
+      observation-enabled: true
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
@@ -22,3 +26,21 @@ springdoc:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+    enabled: true
+  propagation:
+    type: w3c
+
+logging:
+  level:
+    root: WARN
+    com.bookland: INFO
+    org.springframework: WARN
+    org.springframework.web: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    org.apache.kafka: WARN
+    org.apache.zookeeper: WARN
