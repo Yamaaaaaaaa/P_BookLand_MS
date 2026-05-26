@@ -286,6 +286,7 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=bookland-kafka:29092
       - MAIL_USERNAME=$MAIL_USERNAME
       - MAIL_PASSWORD=$MAIL_PASSWORD
+      - USER_SERVICE_HOST=http://user-service
     depends_on:
       - notification-db
       - redis

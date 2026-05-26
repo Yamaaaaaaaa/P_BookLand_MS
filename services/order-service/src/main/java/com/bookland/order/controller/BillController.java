@@ -6,6 +6,8 @@ import com.bookland.order.dto.response.ApiResponse;
 import com.bookland.order.dto.response.BillDTO;
 import com.bookland.order.entity.Bill.BillStatus;
 import com.bookland.order.service.BillService;
+import com.bookland.order.exception.AppException;
+import com.bookland.order.exception.ErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -101,6 +103,19 @@ public class BillController {
                 .build());
     }
 
+    @PostMapping("/preview")
+    @Operation(summary = "Xem trước hóa đơn để tính khuyến mãi/vận chuyển")
+    public ResponseEntity<ApiResponse<BillDTO>> previewBill(
+            @Parameter(hidden = true) @RequestHeader("X-User-Email") String email,
+            @Valid @RequestBody CreateBillRequest request
+    ) {
+        log.info("POST /api/bills/preview from email={}", email);
+        return ResponseEntity.ok(ApiResponse.<BillDTO>builder()
+                .message("Xem trước hóa đơn thành công")
+                .result(billService.previewBill(email, request))
+                .build());
+    }
+
     @PatchMapping("/{id}/status")
     @Operation(summary = "Cập nhật trạng thái đơn hàng (Admin/Manager/Staff)")
     public ResponseEntity<ApiResponse<BillDTO>> updateBillStatus(
@@ -114,6 +129,44 @@ public class BillController {
                 .result(billService.updateBillStatus(id, request, approverEmail))
                 .build());
     }
+
+    @PatchMapping("/{id}/confirm-delivered")
+    @Operation(summary = "Xác nhận đã giao hàng thành công (Chỉ dành cho Shipper)")
+    public ResponseEntity<ApiResponse<BillDTO>> confirmDelivered(
+            @PathVariable Long id,
+            @Parameter(hidden = true) @RequestHeader("X-User-Email") String email,
+            @Parameter(hidden = true) @RequestHeader("X-User-Roles") String roles
+     ) {
+         log.info("PATCH /api/bills/{}/confirm-delivered from email={}", id, email);
+         if (roles == null || !roles.contains("ROLE_SHIPPER")) {
+             throw new AppException(ErrorCode.FORBIDDEN);
+         }
+         return ResponseEntity.ok(ApiResponse.<BillDTO>builder()
+                 .message("Xác nhận đã giao hàng thành công")
+                 .result(billService.confirmDelivered(id, email))
+                 .build());
+     }
+
+     @GetMapping("/shipping-list")
+     @Operation(summary = "Lấy danh sách đơn hàng đang giao (Chỉ dành cho Shipper)")
+     public ResponseEntity<ApiResponse<Page<BillDTO>>> getShippingBills(
+             @Parameter(hidden = true) @RequestHeader("X-User-Roles") String roles,
+             @RequestParam(defaultValue = "0") int page,
+             @RequestParam(defaultValue = "10") int size,
+             @RequestParam(defaultValue = "createdAt") String sortBy,
+             @RequestParam(defaultValue = "DESC") String sortDirection
+     ) {
+         log.info("GET /api/bills/shipping-list");
+         if (roles == null || (!roles.contains("ROLE_SHIPPER") && !roles.contains("ROLE_ADMIN"))) {
+             throw new AppException(ErrorCode.FORBIDDEN);
+         }
+         Sort.Direction direction = sortDirection.equalsIgnoreCase("ASC")
+                 ? Sort.Direction.ASC
+                 : Sort.Direction.DESC;
+         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+         Page<BillDTO> bills = billService.getAllBills(null, BillStatus.SHIPPING, null, null, null, null, pageable);
+         return ResponseEntity.ok(ApiResponse.<Page<BillDTO>>builder().result(bills).build());
+     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Xóa đơn hàng (Admin/Manager)")

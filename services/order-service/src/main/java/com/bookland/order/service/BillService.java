@@ -135,11 +135,12 @@ public class BillService {
         EventResponse activeEvent = null;
         try {
             ApiResponse<EventResponse> response = eventClient.getHighestPriorityEvent();
+            log.info("Fetched highest priority event response: {}", response);
             if (response != null && response.getResult() != null) {
                 activeEvent = response.getResult();
             }
         } catch (Exception e) {
-            log.warn("Failed to fetch promo event from event-service: {}", e.getMessage());
+            log.error("Failed to fetch promo event from event-service", e);
         }
 
         EventResponse appliedEvent = null;
@@ -147,10 +148,16 @@ public class BillService {
         int totalDiscountValue = 0;
 
         if (activeEvent != null) {
+            log.info("Active event found: ID={}, Name={}, Rules={}, Targets={}, Actions={}",
+                    activeEvent.getId(), activeEvent.getName(), activeEvent.getRules(),
+                    activeEvent.getTargets(), activeEvent.getActions());
             boolean isEligible = checkEventRule(activeEvent, email, tempTotalCost, totalQuantity);
+            log.info("Rule eligibility checked: isEligible={} for tempTotalCost={}, totalQuantity={}", isEligible, tempTotalCost, totalQuantity);
             if (isEligible) {
                 for (BookResponse book : books) {
-                    if (isBookInEventTarget(activeEvent, book.getId())) {
+                    boolean inTarget = isBookInEventTarget(activeEvent, book.getId());
+                    log.info("Checking book ID={} in event target: inTarget={}", book.getId(), inTarget);
+                    if (inTarget) {
                         double originalPrice = book.getFinalPrice() != null ? book.getFinalPrice() : 0.0;
                         double discountedPrice = calculateDiscountedPrice(activeEvent, originalPrice);
                         int qty = quantities.get(book.getId());
@@ -158,9 +165,13 @@ public class BillService {
                         discountedPrices.put(book.getId(), discountedPrice);
                         totalDiscountValue += (int) ((originalPrice - discountedPrice) * qty);
                         appliedEvent = activeEvent;
+                        log.info("Applied discount for book ID={}: originalPrice={}, discountedPrice={}, qty={}, subtotalDiscount={}",
+                                book.getId(), originalPrice, discountedPrice, qty, (int) ((originalPrice - discountedPrice) * qty));
                     }
                 }
             }
+        } else {
+            log.info("No active event found (activeEvent is null)");
         }
 
         // 3. Recalculate final totals
@@ -216,6 +227,123 @@ public class BillService {
         return convertToDTO(savedBill);
     }
 
+    @Transactional(readOnly = true)
+    public BillDTO previewBill(String email, CreateBillRequest request) {
+        String resolvedUserId = resolveUserIdByEmail(email);
+        PaymentMethod paymentMethod = paymentMethodRepository.findById(request.getPaymentMethodId())
+                .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_METHOD_NOT_FOUND));
+
+        ShippingMethod shippingMethod = shippingMethodRepository.findById(request.getShippingMethodId())
+                .orElseThrow(() -> new AppException(ErrorCode.SHIPPING_METHOD_NOT_FOUND));
+
+        // 1. Calculate temporary cost (before coupon check) and check stock limits
+        double tempTotalCost = 0.0;
+        int totalQuantity = 0;
+        List<BookResponse> books = new ArrayList<>();
+        Map<Long, Integer> quantities = new HashMap<>();
+
+        for (BillBookRequest bookRequest : request.getBooks()) {
+            BookResponse book = fetchBook(bookRequest.getBookId());
+
+            if (book.getStock() < bookRequest.getQuantity()) {
+                throw new AppException(ErrorCode.BOOK_OUT_OF_STOCK);
+            }
+
+            double price = book.getFinalPrice() != null ? book.getFinalPrice() : 0.0;
+            tempTotalCost += price * bookRequest.getQuantity();
+            totalQuantity += bookRequest.getQuantity();
+            books.add(book);
+            quantities.put(book.getId(), bookRequest.getQuantity());
+        }
+
+        // 2. Fetch Active Promotion & check rule eligibility
+        EventResponse activeEvent = null;
+        try {
+            ApiResponse<EventResponse> response = eventClient.getHighestPriorityEvent();
+            log.info("Fetched highest priority event response for preview: {}", response);
+            if (response != null && response.getResult() != null) {
+                activeEvent = response.getResult();
+            }
+        } catch (Exception e) {
+            log.error("Failed to fetch promo event from event-service for preview", e);
+        }
+
+        EventResponse appliedEvent = null;
+        Map<Long, Double> discountedPrices = new HashMap<>();
+        int totalDiscountValue = 0;
+
+        if (activeEvent != null) {
+            log.info("Active event found for preview: ID={}, Name={}, Rules={}, Targets={}, Actions={}",
+                    activeEvent.getId(), activeEvent.getName(), activeEvent.getRules(),
+                    activeEvent.getTargets(), activeEvent.getActions());
+            boolean isEligible = checkEventRule(activeEvent, email, tempTotalCost, totalQuantity);
+            log.info("Rule eligibility checked for preview: isEligible={} for tempTotalCost={}, totalQuantity={}", isEligible, tempTotalCost, totalQuantity);
+            if (isEligible) {
+                for (BookResponse book : books) {
+                    boolean inTarget = isBookInEventTarget(activeEvent, book.getId());
+                    log.info("Checking book ID={} in event target for preview: inTarget={}", book.getId(), inTarget);
+                    if (inTarget) {
+                        double originalPrice = book.getFinalPrice() != null ? book.getFinalPrice() : 0.0;
+                        double discountedPrice = calculateDiscountedPrice(activeEvent, originalPrice);
+                        int qty = quantities.get(book.getId());
+
+                        discountedPrices.put(book.getId(), discountedPrice);
+                        totalDiscountValue += (int) ((originalPrice - discountedPrice) * qty);
+                        appliedEvent = activeEvent;
+                        log.info("Applied discount for book ID={} in preview: originalPrice={}, discountedPrice={}, qty={}, subtotalDiscount={}",
+                                book.getId(), originalPrice, discountedPrice, qty, (int) ((originalPrice - discountedPrice) * qty));
+                    }
+                }
+            }
+        } else {
+            log.info("No active event found for preview (activeEvent is null)");
+        }
+
+        // 3. Recalculate final totals
+        double finalBooksCost = 0.0;
+        List<BillBookDTO> bookDTOs = new ArrayList<>();
+        for (BookResponse book : books) {
+            double price = discountedPrices.getOrDefault(book.getId(), book.getFinalPrice() != null ? book.getFinalPrice() : 0.0);
+            int qty = quantities.get(book.getId());
+            double subtotal = price * qty;
+            finalBooksCost += subtotal;
+
+            bookDTOs.add(BillBookDTO.builder()
+                    .bookId(book.getId())
+                    .bookName(book.getName())
+                    .bookImageUrl(book.getBookImageUrl())
+                    .priceSnapshot(price)
+                    .quantity(qty)
+                    .subtotal(subtotal)
+                    .build());
+        }
+
+        double totalCost = finalBooksCost + shippingMethod.getPrice();
+
+        String userName = "Người dùng";
+        try {
+            ApiResponse<UserProfileResponse> profileResponse = userClient.getProfile(resolvedUserId);
+            if (profileResponse != null && profileResponse.getResult() != null) {
+                UserProfileResponse profile = profileResponse.getResult();
+                userName = profile.getUsername() != null ? profile.getUsername() : (profile.getFirstName() + " " + profile.getLastName()).trim();
+            }
+        } catch (Exception e) {
+            log.warn("Failed to enrich username for userId={} in preview: {}", resolvedUserId, e.getMessage());
+        }
+
+        return BillDTO.builder()
+                .userId(resolvedUserId)
+                .userName(userName)
+                .paymentMethodId(paymentMethod.getId())
+                .paymentMethodName(paymentMethod.getName())
+                .shippingMethodId(shippingMethod.getId())
+                .shippingMethodName(shippingMethod.getName())
+                .shippingCost(shippingMethod.getPrice())
+                .totalCost(totalCost)
+                .books(bookDTOs)
+                .build();
+    }
+
     @Transactional
     public BillDTO updateBillStatus(Long id, UpdateBillStatusRequest request, String approverEmail) {
         Bill bill = billRepository.findById(id)
@@ -247,6 +375,24 @@ public class BillService {
             }
         }
 
+        Bill updatedBill = billRepository.save(bill);
+
+        // Notify user via Kafka
+        sendOrderStatusUpdateNotification(updatedBill);
+
+        return convertToDTO(updatedBill);
+    }
+
+    @Transactional
+    public BillDTO confirmDelivered(Long id, String shipperEmail) {
+        Bill bill = billRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.BILL_NOT_FOUND));
+
+        if (bill.getStatus() != BillStatus.SHIPPING) {
+            throw new AppException(ErrorCode.INVALID_STATUS_TRANSITION);
+        }
+
+        bill.setStatus(BillStatus.SHIPPED);
         Bill updatedBill = billRepository.save(bill);
 
         // Notify user via Kafka
