@@ -18,9 +18,10 @@ spring:
       globalcors:
         cors-configurations:
           '[/**]':
-            allowedOrigins: "*"
+            allowedOriginPatterns: "*"
             allowedHeaders: "*"
             allowedMethods: "*"
+            allowCredentials: true
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Origin, RETAIN_FIRST
         - DedupeResponseHeader=Access-Control-Allow-Credentials, RETAIN_FIRST
@@ -114,6 +115,20 @@ spring:
           filters:
             - RewritePath=/notification-service/v3/api-docs, /v3/api-docs
 
+        # Chat Service
+        - id: chat-service
+          uri: http://${CHAT_SERVICE_HOST:localhost}:8089
+          predicates:
+            - Path=/api/chat/**, /chat/**
+
+        # Chat Service API Docs
+        - id: chat-service-api-docs
+          uri: http://${CHAT_SERVICE_HOST:localhost}:8089
+          predicates:
+            - Path=/chat-service/v3/api-docs
+          filters:
+            - RewritePath=/chat-service/v3/api-docs, /v3/api-docs
+
         # File Service
         - id: file-service
           uri: http://${FILE_SERVICE_HOST:localhost}:8087
@@ -174,3 +189,6 @@ springdoc:
         url: /notification-service/v3/api-docs
       - name: Order Service
         url: /order-service/v3/api-docs
+      - name: Chat Service
+        url: /chat-service/v3/api-docs
+

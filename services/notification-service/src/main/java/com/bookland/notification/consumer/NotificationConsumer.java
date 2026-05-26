@@ -3,11 +3,13 @@ package com.bookland.notification.consumer;
 import com.bookland.notification.client.UserClient;
 import com.bookland.notification.dto.event.EmailEvent;
 import com.bookland.notification.dto.event.NotificationEvent;
+import com.bookland.notification.dto.event.ChatEvent;
 import com.bookland.notification.service.EmailService;
 import com.bookland.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -21,6 +23,7 @@ public class NotificationConsumer {
     private final NotificationService notificationService;
     private final EmailService emailService;
     private final UserClient userClient;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @KafkaListener(topics = "notification-events", groupId = "notification-group")
     public void consumeNotificationEvent(NotificationEvent event) {
@@ -91,6 +94,20 @@ public class NotificationConsumer {
             }
         } catch (Exception e) {
             log.error("Error processing EmailEvent", e);
+        }
+    }
+
+    @KafkaListener(topics = "chat-events", groupId = "notification-group")
+    public void consumeChatEvent(ChatEvent event) {
+        log.info("Received ChatEvent via Kafka from {} to {}", event.getFromEmail(), event.getToEmail());
+        try {
+            messagingTemplate.convertAndSendToUser(
+                    event.getToEmail(),
+                    "/queue/chat",
+                    event
+            );
+        } catch (Exception e) {
+            log.error("Error processing ChatEvent and sending to WebSocket", e);
         }
     }
 }

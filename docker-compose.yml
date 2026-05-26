@@ -65,6 +65,19 @@ services:
     volumes:
       - event_data:/var/lib/mysql
 
+  # MySQL — Chat Service DB
+  chat-db:
+    image: mysql:8.0
+    container_name: chat-db
+    environment:
+      MYSQL_DATABASE: chat_db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3312:3306"
+    volumes:
+      - chat_data:/var/lib/mysql
+
+
   # MongoDB — Notification Service DB
   notification-db:
     image: mongo:7.0
@@ -171,6 +184,7 @@ services:
       - NOTIFICATION_SERVICE_HOST=notification-service
       - FILE_SERVICE_HOST=file-service
       - SEARCH_SERVICE_HOST=search-service
+      - CHAT_SERVICE_HOST=chat-service
     depends_on:
       - redis
 
@@ -331,6 +345,26 @@ services:
       - elasticsearch
       - kafka
 
+  chat-service:
+    build:
+      context: .
+      dockerfile: services/chat-service/Dockerfile
+    container_name: chat-service
+    restart: always
+    ports:
+      - "8089:8089"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://chat-db:3306/chat_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=bookland-kafka:29092
+      - USER_SERVICE_HOST=user-service
+      - NOTIFICATION_SERVICE_HOST=notification-service
+    depends_on:
+      - chat-db
+      - kafka
+
+
 volumes:
   identity_data:
   user_data:
@@ -340,3 +374,5 @@ volumes:
   mongo_data:
   minio_data:
   es_data:
+  chat_data:
+

@@ -19,7 +19,7 @@ spring:
       group-id: notification-group
       properties:
         spring.json.trusted.packages: "com.bookland.*"
-        spring.json.type.mapping: "com.bookland.order.dto.event.NotificationEvent:com.bookland.notification.dto.event.NotificationEvent"
+        spring.json.type.mapping: "com.bookland.order.dto.event.NotificationEvent:com.bookland.notification.dto.event.NotificationEvent,com.bookland.chat.dto.event.ChatEvent:com.bookland.notification.dto.event.ChatEvent"
 
   mail:
     host: ${SMTP_HOST:smtp.gmail.com}

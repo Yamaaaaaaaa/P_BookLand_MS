@@ -38,6 +38,18 @@ public class InternalUserController {
     }
 
     /**
+     * GET /internal/users/by-email
+     * Tra cứu profile theo email.
+     */
+    @GetMapping("/internal/users/by-email")
+    public ApiResponse<UserProfileResponse> getProfileByEmail(@RequestParam("email") String email) {
+        return ApiResponse.<UserProfileResponse>builder()
+                .result(userService.getMyProfile(email))
+                .build();
+    }
+
+
+    /**
      * PUT /internal/users/{userId}
      * Cập nhật profile theo Long id (dùng bởi identity-service).
      */
