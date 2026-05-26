@@ -33,6 +33,16 @@ Chỉ cần build lại JAR và restart riêng container đó trong vài giây:
    ```
 
 ---
+### Bước 4: Tạo dữ liệu khởi đầu (Book - Elastic Search):
+- Truy cập http://localhost:8080/webjars/swagger-ui/index.html
+- Đăng nhập
+- Lấy Token mang sang Book Service 
+- Chọn API init 
+- Lấy Token mang sang Search Service 
+- Chọn API init 
+
+=> Tạo bộ dữ liệu mẫu thành công
+
 
 ## 🎨 2. Chạy Frontend (FE)
 
