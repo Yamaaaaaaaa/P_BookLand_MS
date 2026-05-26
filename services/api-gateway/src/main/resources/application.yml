@@ -18,7 +18,10 @@ spring:
       globalcors:
         cors-configurations:
           '[/**]':
-            allowedOriginPatterns: "*"
+            allowedOriginPatterns:
+              - "http://localhost:*"
+              - "https://p-bookland.sonasked1.workers.dev"
+              - "https://*.workers.dev"
             allowedHeaders: "*"
             allowedMethods: "*"
             allowCredentials: true

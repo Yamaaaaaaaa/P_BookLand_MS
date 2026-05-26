@@ -1,5 +1,5 @@
 .env
-
+.env.production
 # Maven build output
 target/
 *.jar
