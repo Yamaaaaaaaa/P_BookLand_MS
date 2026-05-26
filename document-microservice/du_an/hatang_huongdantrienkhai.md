@@ -548,7 +548,7 @@ kubectl get pvc,pods -n bookland
 Trong môi trường thực tế, bạn viết code trên máy thật **Windows Host**, sau đó cần đẩy (Push) lên Git và kéo (Pull) về **máy ảo Ubuntu** để tiến hành đóng gói Docker.
 
 > [!TIP]
-> **Điểm cải tiến cực lớn:** Hệ thống đã được nâng cấp lên **Dockerfile đa giai đoạn (Multi-stage Dockerfile)**. Toàn bộ tiến trình biên dịch code Java ra file JAR và đóng gói sẽ diễn ra **100% bên trong container Docker**. Bạn **không cần phải cài đặt JDK 17 hay Maven trên máy ảo Ubuntu** nữa! Điều này giúp tiết kiệm tài nguyên máy ảo và tăng tốc độ triển khai vượt trội!
+> **Ghi chú về Đóng gói:** Quy trình đóng gói hiện tại yêu cầu build ra file `.jar` trước trên máy ảo, sau đó đưa vào Docker image. Hãy đảm bảo bạn cài đặt sẵn JDK 17 và Maven trên máy ảo Ubuntu để thực hiện biên dịch mã nguồn.
 
 #### Bước 1: Cài đặt và cấu hình Git trên máy ảo Ubuntu (Nếu chưa có)
 
@@ -583,17 +583,25 @@ git config --global user.email "your-email@example.com"
        cd /home/vboxuser/P_BookLand_MS
        git fetch
        git checkout -f dev
+       git pull origin dev
        ```
 
-#### Bước 3: Trỏ terminal máy ảo vào Docker Daemon của Minikube
+#### Bước 3: Biên dịch mã nguồn ra file JAR
+Vì cấu trúc hiện tại yêu cầu build ra file `.jar` trên host trước khi đưa vào Docker, bạn cần biên dịch mã nguồn. Đảm bảo máy ảo Ubuntu đã cài đặt JDK 17 và Maven (nếu chưa có: `sudo apt update && sudo apt install openjdk-17-jdk maven -y`).
+Tại thư mục gốc `/home/vboxuser/P_BookLand_MS`, chạy lệnh:
+```bash
+mvn clean package -DskipTests
+```
+
+#### Bước 4: Trỏ terminal máy ảo vào Docker Daemon của Minikube
 Tại cửa sổ Terminal của máy ảo Ubuntu, chạy lệnh liên kết môi trường:
 ```bash
 eval $(minikube -p minikube docker-env)
 ```
 *(Từ lúc này, mọi lệnh `docker build` chạy trong terminal này sẽ ghi trực tiếp vào Registry của cụm Minikube).*
 
-#### Bước 4: Đóng gói Docker Image trực tiếp từ mã nguồn (Containerized Build)
-Đứng tại thư mục gốc dự án `/home/vboxuser/P_BookLand_MS` trong máy ảo, chạy lệnh build ảnh Docker cho từng service. Docker sẽ tự động biên dịch và đóng gói JAR ngay trong container:
+#### Bước 5: Đóng gói Docker Image (Containerized Build)
+Đứng tại thư mục gốc dự án `/home/vboxuser/P_BookLand_MS` trong máy ảo, chạy lệnh build ảnh Docker cho từng service (Docker sẽ lấy file JAR bạn vừa build xong để đưa vào Image):
 ```bash
 # 1. Build API Gateway
 docker build -t bookland/api-gateway:1.0 -f services/api-gateway/Dockerfile .

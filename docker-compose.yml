@@ -365,6 +365,17 @@ services:
       - kafka
 
 
+  frontend:
+    build:
+      context: ./BookLand_FE
+      dockerfile: Dockerfile
+    container_name: bookland-frontend
+    restart: always
+    ports:
+      - "5173:80"
+    depends_on:
+      - api-gateway
+
 volumes:
   identity_data:
   user_data:
@@ -375,4 +386,3 @@ volumes:
   minio_data:
   es_data:
   chat_data:
-
