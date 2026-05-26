@@ -25,6 +25,11 @@ public enum ErrorCode {
     SERIE_NOT_FOUND(4044, "Không tìm thấy bộ sách", HttpStatus.NOT_FOUND),
     SERIE_ALREADY_EXISTS(4005, "Tên bộ sách đã tồn tại", HttpStatus.BAD_REQUEST),
 
+    // Comment errors
+    COMMENT_NOT_FOUND(5001, "Không tìm thấy bình luận", HttpStatus.NOT_FOUND),
+    ALREADY_COMMENTED(5002, "Bạn đã đánh giá cuốn sách này rồi", HttpStatus.BAD_REQUEST),
+    BOOK_NOT_PURCHASED(3002, "Bạn cần mua sách trước khi viết đánh giá", HttpStatus.BAD_REQUEST),
+
     // General
     UNAUTHENTICATED(4010, "Chưa xác thực", HttpStatus.UNAUTHORIZED),
     FORBIDDEN(4030, "Không có quyền truy cập", HttpStatus.FORBIDDEN),

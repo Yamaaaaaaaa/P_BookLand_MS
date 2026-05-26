@@ -9,6 +9,8 @@ import type { Notification } from '../types/Notification';
 import { toast } from 'react-toastify';
 import { useWebSocket } from '../context/WebSocketContext';
 import { useTranslation } from 'react-i18next';
+import userService from '../api/userService';
+import type { User as UserData } from '../types/User';
 
 interface HeaderProps {
     onLogout: () => void;
@@ -31,6 +33,7 @@ const Header = ({ onLogout, cartItemCount = 3, isAuthenticated }: HeaderProps) =
     const { subscribe, isConnected } = useWebSocket();
     const categoryMenuRef = useRef<HTMLDivElement>(null);
     const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
+    const [userProfile, setUserProfile] = useState<UserData | null>(null);
 
     const notificationRef = useRef<HTMLDivElement>(null);
     const userMenuRef = useRef<HTMLDivElement>(null);
@@ -45,6 +48,9 @@ const Header = ({ onLogout, cartItemCount = 3, isAuthenticated }: HeaderProps) =
     useEffect(() => {
         if (userId && isAuthenticated) {
             fetchUnreadCount();
+            userService.getOwnProfile().then(res => {
+                if (res.code === 1000) setUserProfile(res.result);
+            }).catch(console.error);
         }
     }, [userId, isAuthenticated]);
 
@@ -424,8 +430,8 @@ const Header = ({ onLogout, cartItemCount = 3, isAuthenticated }: HeaderProps) =
                                                     <User size={24} />
                                                 </div>
                                                 <div className="new-header__user-details">
-                                                    <h4>{mockUser.name}</h4>
-                                                    <p>{mockUser.role}</p>
+                                                    <h4>{userProfile ? userProfile.username : mockUser.name}</h4>
+                                                    <p>{userProfile ? 'Thành viên BookLand' : mockUser.role}</p>
                                                 </div>
                                             </Link>
                                             <div className="new-header__user-menu-list">
@@ -567,8 +573,8 @@ const Header = ({ onLogout, cartItemCount = 3, isAuthenticated }: HeaderProps) =
                                     <User size={24} />
                                 </div>
                                 <div className="new-header__user-details">
-                                    <h4 style={{ margin: '0 0 4px', fontSize: '15px', color: '#333' }}>{mockUser.name}</h4>
-                                    <p style={{ margin: 0, fontSize: '12px', color: '#999' }}>{mockUser.role}</p>
+                                    <h4 style={{ margin: '0 0 4px', fontSize: '15px', color: '#333' }}>{userProfile ? userProfile.username : mockUser.name}</h4>
+                                    <p style={{ margin: 0, fontSize: '12px', color: '#999' }}>{userProfile ? 'Thành viên BookLand' : mockUser.role}</p>
                                 </div>
                             </Link>
                             {userMenuItems.map((item) => (

@@ -62,7 +62,7 @@ spring:
         - id: book-service
           uri: http://${BOOK_SERVICE_HOST:localhost}:8083
           predicates:
-            - Path=/api/books/**, /api/authors/**, /api/categories/**, /api/series/**, /api/publishers/**, /api/admin/**
+            - Path=/api/books/**, /api/authors/**, /api/categories/**, /api/series/**, /api/publishers/**, /api/admin/**, /book-comments/**
 
         # Book Service API Docs
         - id: book-service-api-docs

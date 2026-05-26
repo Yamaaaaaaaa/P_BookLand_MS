@@ -175,4 +175,16 @@ public class BillController {
         billService.deleteBill(id);
         return ResponseEntity.ok(ApiResponse.<Void>builder().message("Xóa đơn hàng thành công").build());
     }
+
+    @GetMapping("/internal/verify-purchase")
+    @Operation(summary = "Xác thực người dùng đã mua sách thành công (Internal API)")
+    public ResponseEntity<ApiResponse<Boolean>> verifyPurchase(
+            @RequestParam String userId,
+            @RequestParam Long bookId
+    ) {
+        log.info("GET /api/bills/internal/verify-purchase?userId={}&bookId={}", userId, bookId);
+        return ResponseEntity.ok(ApiResponse.<Boolean>builder()
+                .result(billService.verifyPurchase(userId, bookId))
+                .build());
+    }
 }

@@ -43,6 +43,7 @@ import Gallery from './pages/admin/Gallery';
 import AdminChatListPage from './pages/admin/AdminChatListPage';
 import AdminChatDetailPage from './pages/admin/AdminChatDetailPage';
 import AdminSendEmailPage from './pages/admin/AdminSendEmailPage';
+import EscalationQueuePage from './pages/admin/EscalationQueuePage';
 
 // Shipper Pages
 import ShipperLoginPage from './pages/shipper/auth/ShipperLoginPage';
@@ -98,6 +99,8 @@ function App() {
               <Route path="gallery" element={<Gallery />} />
               <Route path="chat" element={<AdminChatListPage />} />
               <Route path="chat/:userId" element={<AdminChatDetailPage />} />
+              {/* Chatbot escalation queue */}
+              <Route path="escalations" element={<EscalationQueuePage />} />
               <Route path="manage-user/:id" element={<AdminUserDetailPage />} />
 
               {/* Manage Business */}

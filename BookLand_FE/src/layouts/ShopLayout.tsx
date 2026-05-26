@@ -4,6 +4,8 @@ import authService from '../api/authService';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import ChatWidget from '../components/ChatWidget';
+import ChatbotWidget from '../components/ChatbotWidget/ChatbotWidget';
+import { ChatbotProvider } from '../context/ChatbotContext';
 import cartService from '../api/cartService';
 import userService from '../api/userService';
 import { getCurrentUserId, setCustomerUserId } from '../utils/auth';
@@ -91,14 +93,19 @@ const ShopLayout = () => {
 
 
     return (
-        <div className="shop-layout">
-            <Header onLogout={handleLogout} cartItemCount={cartCount} isAuthenticated={isCustomerAuthenticated()} />
-            <main className="shop-main">
-                <Outlet />
-            </main>
-            <Footer />
-            {isCustomerAuthenticated() && <ChatWidget />}
-        </div>
+        <ChatbotProvider>
+            <div className="shop-layout">
+                <Header onLogout={handleLogout} cartItemCount={cartCount} isAuthenticated={isCustomerAuthenticated()} />
+                <main className="shop-main">
+                    <Outlet />
+                </main>
+                <Footer />
+                {/* ChatWidget cũ — chat trực tiếp với admin (chỉ user đăng nhập) */}
+                {isCustomerAuthenticated() && <ChatWidget />}
+                {/* ChatbotWidget mới — AI chatbot (cả guest lẫn user đăng nhập) */}
+                <ChatbotWidget />
+            </div>
+        </ChatbotProvider>
     );
 };
 

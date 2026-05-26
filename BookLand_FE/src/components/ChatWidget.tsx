@@ -11,6 +11,19 @@ const ADMIN_EMAIL = 'admin@gmail.com';
 const ChatWidget: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+
+    // Lắng nghe event đóng widget từ Chatbot
+    useEffect(() => {
+        const handleClose = () => setIsOpen(false);
+        window.addEventListener('close-admin-chat', handleClose);
+        return () => window.removeEventListener('close-admin-chat', handleClose);
+    }, []);
+
+    const openAdminChat = () => {
+        window.dispatchEvent(new CustomEvent('close-chatbot'));
+        setIsOpen(true);
+        setUnreadCount(0);
+    };
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -99,7 +112,7 @@ const ChatWidget: React.FC = () => {
             {!isOpen && (
                 <button
                     className="chat-widget-button"
-                    onClick={() => { setIsOpen(true); setUnreadCount(0); }}
+                    onClick={openAdminChat}
                     aria-label="Open chat"
                 >
                     <MessageCircle size={24} />

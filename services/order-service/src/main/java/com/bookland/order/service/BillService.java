@@ -836,6 +836,13 @@ public class BillService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
+    public boolean verifyPurchase(String userId, Long bookId) {
+        return billRepository.existsByUserIdAndBookIdAndStatusIn(
+                userId, bookId, List.of(BillStatus.SHIPPED, BillStatus.COMPLETED)
+        );
+    }
+
     private String resolveUserIdByEmail(String email) {
         try {
             ApiResponse<UserProfileResponse> response = userClient.getMyProfile(email);

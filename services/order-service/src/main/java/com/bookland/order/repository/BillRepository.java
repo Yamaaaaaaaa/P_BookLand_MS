@@ -23,4 +23,9 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 
     @Query("SELECT b FROM Bill b LEFT JOIN FETCH b.billBooks bb WHERE b.id = :id")
     Optional<Bill> findByIdWithBooks(@Param("id") Long id);
+
+    @Query("SELECT COUNT(b) > 0 FROM Bill b JOIN b.billBooks bb WHERE b.userId = :userId AND bb.bookId = :bookId AND b.status IN :statuses")
+    boolean existsByUserIdAndBookIdAndStatusIn(@Param("userId") String userId, 
+                                               @Param("bookId") Long bookId, 
+                                               @Param("statuses") java.util.Collection<BillStatus> statuses);
 }
