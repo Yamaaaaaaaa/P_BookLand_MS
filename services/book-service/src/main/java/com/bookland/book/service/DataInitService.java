@@ -26,6 +26,20 @@ public class DataInitService {
     private final SerieRepository serieRepository;
     private final CategoryRepository categoryRepository;
     private final BookRepository bookRepository;
+    private final BookCommentRepository bookCommentRepository;
+
+    @Transactional
+    public String clearData() {
+        log.info("Bắt đầu xóa toàn bộ dữ liệu book-service...");
+        bookCommentRepository.deleteAll();
+        bookRepository.deleteAll();
+        categoryRepository.deleteAll();
+        serieRepository.deleteAll();
+        publisherRepository.deleteAll();
+        authorRepository.deleteAll();
+        log.info("✓ Toàn bộ dữ liệu đã được xóa.");
+        return "Xóa toàn bộ dữ liệu thành công.";
+    }
 
     @Transactional
     public String initData() {

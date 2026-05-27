@@ -28,4 +28,14 @@ public class AdminInitController {
         String message = dataInitService.initData();
         return ApiResponse.<String>builder().result(message).build();
     }
+
+    @PostMapping("/clear-data")
+    @Operation(
+        summary = "Xóa toàn bộ dữ liệu",
+        description = "Xóa sạch toàn bộ dữ liệu trong DB (Comments, Books, Categories, Series, Publishers, Authors)."
+    )
+    public ApiResponse<String> clearData() {
+        String message = dataInitService.clearData();
+        return ApiResponse.<String>builder().result(message).build();
+    }
 }
