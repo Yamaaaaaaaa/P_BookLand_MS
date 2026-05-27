@@ -18,7 +18,7 @@ public class SwaggerConfig {
     @Value("${app.openapi.dev-url:http://api.bookland.local}")
     private String devUrl;
 
-    @Value("${app.openapi.prod-url:http://79.108.225.251:8080}")
+    @Value("${app.openapi.prod-url:https://api.p-bookland.io.vn}")
     private String prodUrl;
 
     @Bean

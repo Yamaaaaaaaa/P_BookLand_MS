@@ -263,9 +263,11 @@ kubectl get pods -n bookland -w
 
 ## 🌐 8. Bước 7: Truy Cập API Từ Máy Cá Nhân (Local)
 
-Để kết nối với các API Gateway chạy trên máy chủ Cloud thông qua tên miền cấu hình trong Ingress (`api.bookland.local`):
+Bạn có thể kết nối với hệ thống API chạy trên máy chủ Cloud thông qua hai tên miền:
+1. **Tên miền thực tế qua Cloudflare (Không cần sửa file hosts):** `http://api.p-bookland.io.vn` (hoặc `https://api.p-bookland.io.vn`).
+2. **Tên miền ảo nội bộ (Cần sửa file hosts):** `http://api.bookland.local`.
 
-### Cấu hình file Hosts trên máy tính cá nhân của bạn (PC/Laptop):
+### Cấu hình file Hosts trên máy tính cá nhân của bạn (Chỉ áp dụng nếu dùng tên miền ảo `api.bookland.local`):
 1.  **Nếu dùng Windows**:
     *   Mở Notepad bằng quyền Administrator (Run as Administrator).
     *   Mở file: `C:\Windows\System32\drivers\etc\hosts`.
@@ -280,3 +282,46 @@ kubectl get pods -n bookland -w
 ### Kiểm tra truy cập:
 Sau khi cấu hình hosts, hãy mở trình duyệt trên máy cá nhân và truy cập:
 *   **API Gateway (Swagger UI):** `http://api.bookland.local/webjars/swagger-ui/index.html` (hoặc test các endpoint của API).
+
+---
+
+## 🔄 9. Phụ Lục: Cập Nhật Code Mới & Khởi Động Lại Hệ Thống
+
+Khi bạn thay đổi cấu hình dự án hoặc cập nhật mã nguồn (ví dụ: sửa file `application.yml`, đổi logic Java...), hãy chạy các bước sau trên VPS để cập nhật hệ thống:
+
+### Bước 1: Kéo code mới nhất từ Git về VPS
+```bash
+cd ~/P_BookLand_MS
+git pull origin dev
+```
+
+### Bước 2: Biên dịch lại mã nguồn Java thành file JAR
+```bash
+mvn clean package -DskipTests
+```
+
+### Bước 3: Trỏ Docker CLI vào Minikube và build lại các Docker Images
+```bash
+# Trỏ Docker CLI của Terminal hiện tại vào Minikube
+eval $(minikube docker-env)
+
+# Build lại các service (nhớ chạy đúng tại thư mục gốc ~/P_BookLand_MS)
+docker build -t bookland/api-gateway:1.0 -f services/api-gateway/Dockerfile .
+docker build -t bookland/book-service:1.0 -f services/book-service/Dockerfile .
+docker build -t bookland/chat-service:1.0 -f services/chat-service/Dockerfile .
+docker build -t bookland/event-service:1.0 -f services/event-service/Dockerfile .
+docker build -t bookland/file-service:1.0 -f services/file-service/Dockerfile .
+docker build -t bookland/identity-service:1.0 -f services/identity-service/Dockerfile .
+docker build -t bookland/notification-service:1.0 -f services/notification-service/Dockerfile .
+docker build -t bookland/order-service:1.0 -f services/order-service/Dockerfile .
+docker build -t bookland/search-service:1.0 -f services/search-service/Dockerfile .
+docker build -t bookland/user-service:1.0 -f services/user-service/Dockerfile .
+```
+
+### Bước 4: Khởi động lại các Service trên Kubernetes
+Lệnh này sẽ ra lệnh cho Kubernetes thay thế các Pod cũ bằng các Pod chạy ảnh Docker mới vừa build:
+```bash
+kubectl rollout restart deployment -n bookland
+```
+
+*Lưu ý: Quá trình khởi động lại sẽ mất khoảng 1-2 phút. Trong thời gian này nếu bạn truy cập API có thể gặp lỗi 502 Bad Gateway tạm thời. Hãy dùng lệnh `kubectl get pods -n bookland -w` để theo dõi cho đến khi các Pod ở trạng thái `Running`.*

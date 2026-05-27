@@ -23,7 +23,7 @@ Khai báo dependency trong `pom.xml` của service mới:
 @Value("${app.openapi.dev-url:http://localhost:8080}")
 private String devUrl;
 
-@Value("${app.openapi.prod-url:http://79.108.225.251:8080}")
+@Value("${app.openapi.prod-url:http://79.108.225.251}")
 private String prodUrl;
 
 @Bean

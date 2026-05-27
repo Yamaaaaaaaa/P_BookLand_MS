@@ -7,6 +7,7 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -14,6 +15,12 @@ import java.util.List;
 
 @Configuration
 public class SwaggerConfig {
+
+    @Value("${app.openapi.dev-url:http://api.bookland.local}")
+    private String devUrl;
+
+    @Value("${app.openapi.prod-url:https://api.p-bookland.io.vn}")
+    private String prodUrl;
 
     @Bean
     public OpenAPI orderServiceOpenAPI() {
@@ -27,8 +34,9 @@ public class SwaggerConfig {
                                 .name("BookLand Team")
                                 .email("support@bookland.com")))
                 .servers(List.of(
-                        new Server().url("http://localhost:8080").description("Via API Gateway (Dev)"),
-                        new Server().url("http://localhost:8084").description("Direct - Local Dev")))
+                        new Server().url(devUrl).description("Development Server (Gateway)"),
+                        new Server().url(prodUrl).description("Production Server (Gateway)"),
+                        new Server().url("/").description("Relative Server Route (Auto-detect)")))
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
                 .components(new Components()
                         .addSecuritySchemes(securitySchemeName,
