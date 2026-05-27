@@ -1,10 +1,10 @@
-# 📚 BookLand Microservice Architecture — Tài liệu tổng quan
+# BookLand Microservice Architecture — Tài liệu tổng quan
 
 > Tài liệu này mô tả kế hoạch chuyển đổi hệ thống **BookLand** từ kiến trúc **Monolithic** hiện tại sang kiến trúc **Microservice**, lấy cảm hứng từ mô hình **Bookteria** đã được nghiên cứu.
 
 ---
 
-## 📂 Cấu trúc tài liệu
+## Cấu trúc tài liệu
 
 ```
 document-microservice/
@@ -26,7 +26,7 @@ document-microservice/
 
 ---
 
-## 🎯 Mục tiêu chuyển đổi
+## Mục tiêu chuyển đổi
 
 | Tiêu chí | Monolithic (hiện tại) | Microservice (mục tiêu) |
 |---|---|---|
@@ -39,7 +39,7 @@ document-microservice/
 
 ---
 
-## 🗺️ Sơ đồ kiến trúc tổng quan
+## Sơ đồ kiến trúc tổng quan
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -63,7 +63,7 @@ document-microservice/
 
 ---
 
-## 📋 Danh sách service đề xuất
+## Danh sách service đề xuất
 
 | # | Service | Port | Database | Mô tả |
 |---|---------|------|----------|-------|
@@ -79,7 +79,7 @@ document-microservice/
 
 ---
 
-## 🚀 Quick Start — Đọc tài liệu theo thứ tự
+## Quick Start — Đọc tài liệu theo thứ tự
 
 1. **[01 - Kiến trúc hiện tại](./01-current-architecture.md)** — Hiểu rõ Monolith đang có gì
 2. **[02 - Kiến trúc mục tiêu](./02-target-architecture.md)** — Tầm nhìn kiến trúc Microservice
