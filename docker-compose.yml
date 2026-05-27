@@ -216,7 +216,7 @@ services:
       driver: "fluentd"
       options:
         fluentd-address: "tcp://127.0.0.1:24224"
-        fluentd-async-connect: "true"
+        fluentd-async: "true"
         tag: "docker.{{.Name}}"
 
   identity-service:
@@ -244,7 +244,7 @@ services:
       driver: "fluentd"
       options:
         fluentd-address: "tcp://127.0.0.1:24224"
-        fluentd-async-connect: "true"
+        fluentd-async: "true"
         tag: "docker.{{.Name}}"
 
   user-service:
@@ -268,7 +268,7 @@ services:
       driver: "fluentd"
       options:
         fluentd-address: "tcp://127.0.0.1:24224"
-        fluentd-async-connect: "true"
+        fluentd-async: "true"
         tag: "docker.{{.Name}}"
 
   book-service:
@@ -292,7 +292,7 @@ services:
       driver: "fluentd"
       options:
         fluentd-address: "tcp://127.0.0.1:24224"
-        fluentd-async-connect: "true"
+        fluentd-async: "true"
         tag: "docker.{{.Name}}"
 
   order-service:
@@ -322,7 +322,7 @@ services:
       driver: "fluentd"
       options:
         fluentd-address: "tcp://127.0.0.1:24224"
-        fluentd-async-connect: "true"
+        fluentd-async: "true"
         tag: "docker.{{.Name}}"
 
   event-service:
@@ -346,7 +346,7 @@ services:
       driver: "fluentd"
       options:
         fluentd-address: "tcp://127.0.0.1:24224"
-        fluentd-async-connect: "true"
+        fluentd-async: "true"
         tag: "docker.{{.Name}}"
 
   notification-service:
@@ -374,7 +374,7 @@ services:
       driver: "fluentd"
       options:
         fluentd-address: "tcp://127.0.0.1:24224"
-        fluentd-async-connect: "true"
+        fluentd-async: "true"
         tag: "docker.{{.Name}}"
 
   file-service:
@@ -399,7 +399,7 @@ services:
       driver: "fluentd"
       options:
         fluentd-address: "tcp://127.0.0.1:24224"
-        fluentd-async-connect: "true"
+        fluentd-async: "true"
         tag: "docker.{{.Name}}"
 
   search-service:
@@ -421,7 +421,7 @@ services:
       driver: "fluentd"
       options:
         fluentd-address: "tcp://127.0.0.1:24224"
-        fluentd-async-connect: "true"
+        fluentd-async: "true"
         tag: "docker.{{.Name}}"
 
   chat-service:
@@ -446,7 +446,7 @@ services:
       driver: "fluentd"
       options:
         fluentd-address: "tcp://127.0.0.1:24224"
-        fluentd-async-connect: "true"
+        fluentd-async: "true"
         tag: "docker.{{.Name}}"
 
 
@@ -464,7 +464,7 @@ services:
       driver: "fluentd"
       options:
         fluentd-address: "tcp://127.0.0.1:24224"
-        fluentd-async-connect: "true"
+        fluentd-async: "true"
         tag: "docker.{{.Name}}"
 
 volumes:
