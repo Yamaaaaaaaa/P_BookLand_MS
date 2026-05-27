@@ -52,5 +52,7 @@ spec:
               value: "file-service"
             - name: SEARCH_SERVICE_HOST
               value: "search-service"
+            - name: CHAT_SERVICE_HOST
+              value: "chat-service"
           ports:
             - containerPort: 8080
