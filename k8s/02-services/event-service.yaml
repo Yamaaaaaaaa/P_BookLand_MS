@@ -38,5 +38,9 @@ spec:
               value: "root"
             - name: SERVICES_ORDER_SERVICE_URL
               value: "http://order-service:8084"
+            - name: SERVICES_USER_SERVICE_URL
+              value: "http://user-service:8082"
+            - name: SERVICES_BOOK_SERVICE_URL
+              value: "http://book-service:8083"
           ports:
             - containerPort: 8085

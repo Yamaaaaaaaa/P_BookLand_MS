@@ -38,5 +38,11 @@ spec:
               value: "root"
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
               value: "kafka:9092"
+            - name: USER_SERVICE_HOST
+              value: "user-service"
+            - name: SEARCH_SERVICE_HOST
+              value: "search-service"
+            - name: ORDER_SERVICE_HOST
+              value: "order-service"
           ports:
             - containerPort: 8083

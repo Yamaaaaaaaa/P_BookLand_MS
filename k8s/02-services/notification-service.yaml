@@ -40,6 +40,8 @@ spec:
               value: "bookland123"
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
               value: "kafka:9092"
+            - name: USER_SERVICE_HOST
+              value: "user-service"
           envFrom:
             - secretRef:
                 name: bookland-secret
