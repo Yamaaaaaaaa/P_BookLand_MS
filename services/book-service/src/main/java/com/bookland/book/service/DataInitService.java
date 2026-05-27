@@ -66,22 +66,22 @@ public class DataInitService {
         Author author1 = authorRepository.save(Author.builder()
                 .name("J.K. Rowling")
                 .description("Tác giả người Anh, nổi tiếng với series Harry Potter")
-                .authorImage("jk_rowling.jpg")
+                .authorImage("https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/J._K._Rowling_2010.jpg/1280px-J._K._Rowling_2010.jpg")
                 .build());
         Author author2 = authorRepository.save(Author.builder()
                 .name("Fujiko F. Fujio")
                 .description("Bút danh của Hiroshi Fujimoto, tác giả truyện Doraemon")
-                .authorImage("fujiko.jpg")
+                .authorImage("https://upload.wikimedia.org/wikipedia/vi/d/de/Doraemon_with_signature.gif")
                 .build());
         Author author3 = authorRepository.save(Author.builder()
                 .name("Nguyễn Nhật Ánh")
                 .description("Nhà văn Việt Nam nổi tiếng với các tác phẩm thiếu nhi")
-                .authorImage("nguyen_nhat_anh.jpg")
+                .authorImage("https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/Nguyen_Nhat_Anh_in_January_2019.png/960px-Nguyen_Nhat_Anh_in_January_2019.png")
                 .build());
         Author author4 = authorRepository.save(Author.builder()
                 .name("Bộ Giáo dục và Đào tạo")
                 .description("Tác giả các sách giáo khoa Việt Nam")
-                .authorImage("bgddt.jpg")
+                .authorImage("https://xdcs.cdnchinhphu.vn/thumb_w/640/446259493575335936/2023/5/24/bgd-16849118818681667510301.jpg")
                 .build());
         log.info("✓ Authors seeded.");
 
@@ -218,9 +218,9 @@ public class DataInitService {
         // 8. Tạo Books — Nguyễn Nhật Ánh
         Set<Category> nnaCats = Set.of(category5);
         String[][] nnaData = {
-            {"Tôi thấy hoa vàng trên cỏ xanh", "Câu chuyện tuổi thơ miền Trung", "90000", "15", "120", "2010-12-01", "nna_hoa_vang.jpg", "true"},
-            {"Mắt biếc", "Chuyện tình đầu dang dở", "85000", "15", "110", "1990-01-01", "nna_mat_biec.jpg", "true"},
-            {"Cho tôi xin một vé đi tuổi thơ", "Hồi ức tuổi thơ", "75000", "10", "100", "2008-01-01", "nna_ve_tuoi_tho.jpg", "false"},
+            {"Tôi thấy hoa vàng trên cỏ xanh", "Câu chuyện tuổi thơ miền Trung", "90000", "15", "120", "2010-12-01", "https://static.oreka.vn/800-800_f2abbc10-2a20-45ea-9a45-71564996ab51.webp", "true"},
+            {"Mắt biếc", "Chuyện tình đầu dang dở", "85000", "15", "110", "1990-01-01", "https://static.oreka.vn/800-800_933f4713-38dc-42cf-98ed-dca3b48c3343", "true"},
+            {"Cho tôi xin một vé đi tuổi thơ", "Hồi ức tuổi thơ", "75000", "10", "100", "2008-01-01", "https://static.oreka.vn/800-800_163bc337-669e-482b-95c5-9f1a17b717a7", "false"},
         };
         for (String[] d : nnaData) {
             bookRepository.save(Book.builder()
@@ -317,17 +317,17 @@ public class DataInitService {
         {"Toán 5","Sách giáo khoa Toán lớp 5",18000.0,200,"https://scvvtnvriucbhkrstung.supabase.co/storage/v1/object/public/book-images/bc1bf9ca-2c59-43f3-95f0-9a7ba916d636-download%20(5).jpg",5},
         {"Tiếng Việt 5","Sách giáo khoa Tiếng Việt lớp 5",23000.0,200,"sgk_tv5.jpg",5},
         {"Lịch Sử và Địa lý 5","Sách giáo khoa Lịch Sử và Địa lý lớp 5",20000.0,200,"https://cdn1.fahasa.com/media/catalog/product/b/_/b_a-ch_ng-t_c-v_-l_ch-s_.jpg",5},
-        {"Toán 6","Sách giáo khoa Toán lớp 6",25000.0,180,"sgk_toan6.jpg",6},
-        {"Ngữ Văn 6","Sách giáo khoa Ngữ Văn lớp 6",28000.0,180,"sgk_van6.jpg",6},
+        {"Toán 6","Sách giáo khoa Toán lớp 6",25000.0,180,"https://static.oreka.vn/800-800_163bc337-669e-482b-95c5-9f1a17b717a7",6},
+        {"Ngữ Văn 6","Sách giáo khoa Ngữ Văn lớp 6",28000.0,180,"https://static.oreka.vn/800-800_163bc337-669e-482b-95c5-9f1a17b717a7",6},
         {"Lịch Sử 6","Sách giáo khoa Lịch Sử lớp 6",22000.0,180,"https://cdn1.fahasa.com/media/catalog/product/b/_/b_a-ch_ng-t_c-v_-l_ch-s_.jpg",6},
-        {"Toán 7","Sách giáo khoa Toán lớp 7",26000.0,180,"https://cdn1.fahasa.com/media/catalog/product/b/_/b_a-ch_ng-t_c-v_-l_ch-s_.jpg",7},
+        {"Toán 7","Sách giáo khoa Toán lớp 7",26000.0,180,"https://salt.tikicdn.com/ts/upload/c2/bc/6d/ff18cc8968e2bbb43f7ac58efbfafdff.png",7},
         {"Ngữ Văn 7","Sách giáo khoa Ngữ Văn lớp 7",29000.0,180,"https://cdn1.fahasa.com/media/catalog/product/b/_/b_a-ch_ng-t_c-v_-l_ch-s_.jpg",7},
-        {"Lịch Sử 7","Sách giáo khoa Lịch Sử lớp 7",23000.0,180,"https://cdn1.fahasa.com/media/catalog/product/b/_/b_a-ch_ng-t_c-v_-l_ch-s_.jpg",7},
+        {"Lịch Sử 7","Sách giáo khoa Lịch Sử lớp 7",23000.0,180,"https://salt.tikicdn.com/ts/upload/c2/bc/6d/ff18cc8968e2bbb43f7ac58efbfafdff.png",7},
         {"Toán 8","Sách giáo khoa Toán lớp 8",27000.0,180,"https://cdn1.fahasa.com/media/catalog/product/b/_/b_a-ch_ng-t_c-v_-l_ch-s_.jpg",8},
-        {"Ngữ Văn 8","Sách giáo khoa Ngữ Văn lớp 8",30000.0,180,"https://cdn1.fahasa.com/media/catalog/product/b/_/b_a-ch_ng-t_c-v_-l_ch-s_.jpg",8},
+        {"Ngữ Văn 8","Sách giáo khoa Ngữ Văn lớp 8",30000.0,180,"https://salt.tikicdn.com/ts/upload/c2/bc/6d/ff18cc8968e2bbb43f7ac58efbfafdff.png",8},
         {"Lịch Sử 8","Sách giáo khoa Lịch Sử lớp 8",24000.0,180,"https://cdn1.fahasa.com/media/catalog/product/b/_/b_a-ch_ng-t_c-v_-l_ch-s_.jpg",8},
         {"Vật Lý 8","Sách giáo khoa Vật Lý lớp 8",25000.0,180,"https://cdn1.fahasa.com/media/catalog/product/b/_/b_a-ch_ng-t_c-v_-l_ch-s_.jpg",8},
-        {"Toán 9","Sách giáo khoa Toán lớp 9",28000.0,180,"https://cdn1.fahasa.com/media/catalog/product/b/_/b_a-ch_ng-t_c-v_-l_ch-s_.jpg",9},
+        {"Toán 9","Sách giáo khoa Toán lớp 9",28000.0,180,"https://salt.tikicdn.com/ts/upload/c2/bc/6d/ff18cc8968e2bbb43f7ac58efbfafdff.png",9},
         {"Ngữ Văn 9","Sách giáo khoa Ngữ Văn lớp 9",31000.0,180,"https://cdn1.fahasa.com/media/catalog/product/b/_/b_a-ch_ng-t_c-v_-l_ch-s_.jpg",9},
         {"Lịch Sử 9","Sách giáo khoa Lịch Sử lớp 9",25000.0,180,"https://cdn1.fahasa.com/media/catalog/product/b/_/b_a-ch_ng-t_c-v_-l_ch-s_.jpg",9},
         {"Vật Lý 9","Sách giáo khoa Vật Lý lớp 9",26000.0,180,"https://cdn1.fahasa.com/media/catalog/product/b/_/b_a-ch_ng-t_c-v_-l_ch-s_.jpg",9},
