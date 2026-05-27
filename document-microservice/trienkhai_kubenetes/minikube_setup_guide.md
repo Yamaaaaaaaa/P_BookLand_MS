@@ -182,8 +182,8 @@ docker build -t bookland/order-service:1.0 -f services/order-service/Dockerfile 
 docker build -t bookland/search-service:1.0 -f services/search-service/Dockerfile .
 docker build -t bookland/user-service:1.0 -f services/user-service/Dockerfile .
 
-# Build Logging Infrastructure
-docker build -t bookland/fluentd:1.0 -f fluentd/Dockerfile ./fluentd
+> [!NOTE]
+> **Logging Infrastructure (EFK)**: Bạn không cần build image cho Fluentd và Kibana nữa. Chúng sẽ được tự động cài đặt và lấy ảnh chính thức từ registry thông qua các file YAML trong thư mục `k8s/01-infrastructure/`.
 ```
 
 > [!TIP]
@@ -348,7 +348,6 @@ docker build -t bookland/notification-service:1.0 -f services/notification-servi
 docker build -t bookland/order-service:1.0 -f services/order-service/Dockerfile .
 docker build -t bookland/search-service:1.0 -f services/search-service/Dockerfile .
 docker build -t bookland/user-service:1.0 -f services/user-service/Dockerfile .
-docker build -t bookland/fluentd:1.0 -f fluentd/Dockerfile ./fluentd
 ```
 
 ### Bước 4: Khởi động lại các Service trên Kubernetes
