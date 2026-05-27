@@ -22,6 +22,7 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
+
     private static final String[] PUBLIC_PATHS = {
             "/api/payment-methods/**",
             "/api/shipping-methods/**",
