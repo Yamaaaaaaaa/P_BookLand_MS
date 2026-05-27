@@ -32,4 +32,7 @@ public interface SearchClient {
 
     @org.springframework.web.bind.annotation.DeleteMapping("/api/search/books/{id}")
     ApiResponse<Void> removeBook(@org.springframework.web.bind.annotation.PathVariable("id") Long id);
+
+    @org.springframework.web.bind.annotation.PostMapping("/api/search/init-data")
+    ApiResponse<String> syncIndex();
 }

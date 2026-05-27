@@ -1,5 +1,6 @@
 package com.bookland.book.service;
 
+import com.bookland.book.client.SearchClient;
 import com.bookland.book.entity.*;
 import com.bookland.book.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ public class DataInitService {
     private final CategoryRepository categoryRepository;
     private final BookRepository bookRepository;
     private final BookCommentRepository bookCommentRepository;
+    private final SearchClient searchClient;
 
     @Transactional
     public String clearData() {
@@ -38,6 +40,16 @@ public class DataInitService {
         publisherRepository.deleteAll();
         authorRepository.deleteAll();
         log.info("✓ Toàn bộ dữ liệu đã được xóa.");
+
+        // Clear Elasticsearch search-service index
+        try {
+            log.info("Calling search-service to clear Elasticsearch index...");
+            searchClient.syncIndex();
+            log.info("✓ Elasticsearch index synchronized (cleared).");
+        } catch (Exception e) {
+            log.error("Failed to clear Elasticsearch index during clearData: {}", e.getMessage());
+        }
+
         return "Xóa toàn bộ dữ liệu thành công.";
     }
 
@@ -228,6 +240,16 @@ public class DataInitService {
         long total = bookRepository.count();
         String msg = String.format("Khởi tạo dữ liệu thành công! Tổng số sách: %d", total);
         log.info(msg);
+
+        // Sync Elasticsearch search-service index
+        try {
+            log.info("Calling search-service to sync Elasticsearch index...");
+            searchClient.syncIndex();
+            log.info("✓ Elasticsearch index synchronized.");
+        } catch (Exception e) {
+            log.error("Failed to sync Elasticsearch index during initData: {}", e.getMessage());
+        }
+
         return msg;
     }
 
