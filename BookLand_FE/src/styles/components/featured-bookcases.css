@@ -1,0 +1,102 @@
+
+.featured-bookcases {
+  padding: 12px 0;
+  background-color: #f0f0f0;
+}
+
+.bookcases-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px;
+  background-color: white;
+  border-radius: 8px;
+}
+
+.bookcases-header {
+  background-color: #FCDDEF;
+  padding: 12px 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.bookcases-icon-box {
+  background-color: #F64A4A;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bookcases-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.bookcases-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 16px;
+}
+
+.bookcase-item {
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  transition: transform 0.2s;
+}
+
+.bookcase-item:hover {
+  transform: translateY(-4px);
+}
+
+.bookcase-image-wrapper {
+  width: 100%;
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bookcase-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bookcase-name {
+  font-size: 13px;
+  color: #444;
+  text-align: center;
+  font-weight: 500;
+  line-height: 1.3;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  height: 34px;
+}
+
+@media (max-width: 1200px) {
+  .bookcases-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .bookcases-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

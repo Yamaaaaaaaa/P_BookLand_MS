@@ -16,43 +16,43 @@
                    │    └────────────────────────────────────┘
                    │
                    ▼  HTTPS / WSS
-        ┌──────────────────────────────────────────────────────┐
-        │              API GATEWAY                             │
-        │         (Spring Cloud Gateway)                       │
-        │                                                      │
-        │  ┌─────────────┐  ┌──────────────┐  ┌───────────┐  │
-        │  │ JWT Filter  │  │ Rate Limiter │  │  Routing  │  │
-        │  └─────────────┘  └──────────────┘  └───────────┘  │
-        └──────┬──────┬──────┬──────┬──────┬──────┬──────────┘
-               │      │      │      │      │      │
-               ▼      ▼      ▼      ▼      ▼      ▼
-           ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐
-           │ ID   │ │ USER │ │ BOOK │ │ORDER │ │EVENT │
-           │ SVC  │ │ SVC  │ │ SVC  │ │ SVC  │ │ SVC  │
-           │:8081 │ │:8082 │ │:8083 │ │:8084 │ │:8085 │
-           │MySQL │ │MySQL │ │MySQL │ │MySQL │ │MySQL │
-           └──┬───┘ └──────┘ └──┬───┘ └──┬───┘ └──────┘
-              │                  │        │
-              │   ┌──────────────┘        │
-              │   │    ┌──────────────────┘
-              ▼   ▼    ▼
-         ┌─────────────────────────────────────────┐
-         │        MESSAGE BROKER (Apache Kafka)    │
-         │  Topics: order.created, payment.done,   │
-         │          book.stock.updated, email...   │
-         └──────┬──────────────┬───────────────────┘
-                │              │
-                ▼              ▼
-           ┌────────┐    ┌──────────┐
-           │NOTIF.  │    │ SEARCH   │
-           │SERVICE │    │ SERVICE  │
-           │:8086   │    │:8088     │
-           │MongoDB │    │Elastic-  │
-           └──┬─────┘    │search    │
-              │          └──────────┘
-              ▼
-        ┌──────────┐
-        │  FILE    │
+        ┌──────────────────────────────────────────────────────────────────┐
+        │              API GATEWAY                                         │
+        │         (Spring Cloud Gateway)                                   │
+        │                                                                  │
+        │  ┌─────────────┐  ┌──────────────┐  ┌───────────┐                │
+        │  │ JWT Filter  │  │ Rate Limiter │  │  Routing  │                │
+        │  └─────────────┘  └──────────────┘  └───────────┘                │
+        └──────┬──────┬──────┬──────┬──────┬──────┬─────────┬──────────────┘
+               │      │      │      │      │      │         │
+               ▼      ▼      ▼      ▼      ▼      ▼         ▼
+           ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐  ┌──────┐
+           │ ID   │ │ USER │ │ BOOK │ │ORDER │ │EVENT │  │ CHAT │
+           │ SVC  │ │ SVC  │ │ SVC  │ │ SVC  │ │ SVC  │  │ SVC  │
+           │:8081 │ │:8082 │ │:8083 │ │:8084 │ │:8085 │  │:8089 │
+           │MySQL │ │MySQL │ │MySQL │ │MySQL │ │MySQL │  │MySQL │
+           └──┬───┘ └──────┘ └──┬───┘ └──┬───┘ └──────┘  └──┬───┘
+              │                  │        │                 │
+              │   ┌──────────────┘        │                 │
+              │   │    ┌──────────────────┘                 │
+              ▼   ▼    ▼                                    │
+         ┌─────────────────────────────────────────┐        │
+         │        MESSAGE BROKER (Apache Kafka)    │        │
+         │  Topics: order.created, payment.done,   │        │
+         │          book.stock.updated, email...   │        │
+         └──────┬──────────────┬───────────────────┘        │
+                │              │                            │
+                ▼              ▼                            │
+           ┌────────┐    ┌──────────┐                       │
+           │NOTIF.  │    │ SEARCH   │                       │
+           │SERVICE │    │ SERVICE  │                       │
+           │:8086   │    │:8088     │                       │
+           │MongoDB │    │Elastic-  │                       │
+           └──┬─────┘    │search    │                       │
+              │          └──────────┘                       │
+              ▼                                             │
+        ┌──────────┐                                        │
+        │  FILE    │ ◄──────────────────────────────────────┘
         │ SERVICE  │
         │ :8087    │
         │MinIO/    │
@@ -125,25 +125,25 @@ Order Service
 > **Nguyên tắc cốt lõi**: Mỗi service có database **riêng**. Không service nào được phép truy cập trực tiếp DB của service khác.
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    DATABASE ISOLATION                       │
-│                                                             │
-│  identity_db    user_db      book_db     order_db           │
-│  ┌──────────┐  ┌──────────┐ ┌─────────┐ ┌────────────┐     │
-│  │ users    │  │ addresses│ │ books   │ │ bills      │     │
-│  │ roles    │  │ wishlist │ │ authors │ │ bill_books │     │
-│  │ perms    │  │          │ │ cats    │ │ carts      │     │
-│  │ tokens   │  │          │ │ series  │ │ cart_items │     │
-│  └──────────┘  └──────────┘ │ pubs    │ │ payments   │     │
-│                             │ suppls  │ │ shipping   │     │
-│  event_db      notif_db     │ comments│ └────────────┘     │
-│  ┌──────────┐  ┌──────────┐ │ invoices│                    │
-│  │ events   │  │ notifs   │ └─────────┘  search_index      │
-│  │ evt_rules│  │ chat_msg │             ┌────────────┐     │
-│  │ evt_logs │  └──────────┘             │Elasticsearch│    │
-│  └──────────┘   (MongoDB)              └────────────┘     │
-│   (MySQL)                                                   │
-└─────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────┐
+│                        DATABASE ISOLATION                         │
+│                                                                   │
+│  identity_db    user_db      book_db     order_db      chat_db    │
+│  ┌──────────┐  ┌──────────┐ ┌─────────┐ ┌────────────┐┌──────────┐│
+│  │ users    │  │ addresses│ │ books   │ │ bills      ││ chat_msg ││
+│  │ roles    │  │ wishlist │ │ authors │ │ bill_books │└──────────┘│
+│  │ perms    │  │          │ │ cats    │ │ carts      │  (MySQL)   │
+│  │ tokens   │  │          │ │ series  │ │ cart_items │            │
+│  └──────────┘  └──────────┘ │ pubs    │ │ payments   │            │
+│                             │ suppls  │ │ shipping   │            │
+│  event_db      notif_db     │ comments│ └────────────┘            │
+│  ┌──────────┐  ┌──────────┐ │ invoices│                search_idx │
+│  │ events   │  │ notifs   │ └─────────┘               ┌──────────┐│
+│  │ evt_rules│  └──────────┘                           │Elastic-  ││
+│  │ evt_logs │   (MongoDB)                             │search    ││
+│  └──────────┘                                         └──────────┘│
+│   (MySQL)                                                         │
+└───────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -215,6 +215,7 @@ Hệ thống loại bỏ hoàn toàn các thành phần đăng ký dịch vụ t
 | Notification Service (MongoDB) | **Notification Service** (MongoDB) | Tương đồng |
 | — | **Order Service** (MySQL) | BookLand có thêm E-Commerce |
 | — | **Event Service** (MySQL) | BookLand có thêm Promotion |
+| — | **Chat Service** (MySQL) | Tách từ monolith chat |
 
 ---
 

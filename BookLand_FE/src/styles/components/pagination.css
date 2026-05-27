@@ -1,0 +1,71 @@
+/* ===========================================
+   PAGINATION STYLES
+   =========================================== */
+
+.pagination-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xl);
+  font-family: var(--font-body);
+}
+
+.pagination-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background-color: transparent;
+  color: var(--shop-text-primary);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background-color: var(--shop-bg-accent);
+  color: var(--shop-accent-primary);
+  transform: translateY(-1px);
+}
+
+.pagination-btn.active {
+  background-color: var(--shop-accent-primary);
+  color: var(--shop-text-light);
+  box-shadow: 0 4px 12px var(--shop-shadow-hover);
+  border-color: var(--shop-accent-primary);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: transparent;
+  color: var(--shop-text-muted);
+}
+
+.pagination-btn.dots {
+  cursor: default;
+  color: var(--shop-text-muted);
+  width: 32px;
+}
+
+.pagination-btn.dots:hover {
+  background-color: transparent;
+  color: var(--shop-text-muted);
+  transform: none;
+}
+
+/* Nav buttons (prev/next) specific tweaks if needed */
+.pagination-nav {
+  color: var(--shop-text-secondary);
+}
+
+.pagination-nav:hover:not(:disabled) {
+  background-color: var(--shop-bg-card);
+  border-color: var(--shop-border);
+  color: var(--shop-accent-primary);
+}

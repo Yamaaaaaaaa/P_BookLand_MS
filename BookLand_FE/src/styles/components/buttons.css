@@ -1,0 +1,90 @@
+/* ===========================================
+   BUTTON STYLES
+   =========================================== */
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--shop-text-light);
+  background-color: var(--shop-text-primary);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  font-family: var(--font-body);
+  box-sizing: border-box;
+}
+
+.btn-primary:hover {
+  background-color: var(--shop-accent-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shop-shadow);
+}
+
+.btn-primary--large {
+  padding: var(--spacing-lg) var(--spacing-xl);
+  font-size: 1rem;
+}
+
+.btn-primary--full {
+  width: 100%;
+  justify-content: center;
+}
+
+.btn-primary--disabled {
+  background-color: var(--shop-text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-primary--disabled:hover {
+  background-color: var(--shop-text-muted);
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--shop-text-primary);
+  background-color: var(--shop-bg-card);
+  border: 1px solid var(--shop-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.btn-secondary:hover {
+  background-color: var(--shop-bg-secondary);
+  border-color: var(--shop-accent-primary);
+}
+
+.btn-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--shop-border);
+  background-color: var(--shop-bg-card);
+  border-radius: var(--radius-md);
+  color: var(--shop-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-icon:hover {
+  border-color: var(--shop-accent-primary);
+  color: var(--shop-accent-primary);
+}

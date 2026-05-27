@@ -65,6 +65,19 @@ services:
     volumes:
       - event_data:/var/lib/mysql
 
+  # MySQL — Chat Service DB
+  chat-db:
+    image: mysql:8.0
+    container_name: chat-db
+    environment:
+      MYSQL_DATABASE: chat_db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3312:3306"
+    volumes:
+      - chat_data:/var/lib/mysql
+
+
   # MongoDB — Notification Service DB
   notification-db:
     image: mongo:7.0
@@ -156,6 +169,7 @@ services:
       context: .
       dockerfile: services/api-gateway/Dockerfile
     container_name: api-gateway
+    restart: always
     ports:
       - "8080:8080"
     environment:
@@ -170,6 +184,7 @@ services:
       - NOTIFICATION_SERVICE_HOST=notification-service
       - FILE_SERVICE_HOST=file-service
       - SEARCH_SERVICE_HOST=search-service
+      - CHAT_SERVICE_HOST=chat-service
     depends_on:
       - redis
 
@@ -178,6 +193,7 @@ services:
       context: .
       dockerfile: services/identity-service/Dockerfile
     container_name: identity-service
+    restart: always
     ports:
       - "8081:8081"
     environment:
@@ -188,6 +204,7 @@ services:
       - REDIS_PORT=6379
       - REDIS_PASSWORD=bookland123
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=bookland-kafka:29092
+      - USER_SERVICE_HOST=user-service
     depends_on:
       - identity-db
       - redis
@@ -198,6 +215,7 @@ services:
       context: .
       dockerfile: services/user-service/Dockerfile
     container_name: user-service
+    restart: always
     ports:
       - "8082:8082"
     environment:
@@ -215,6 +233,7 @@ services:
       context: .
       dockerfile: services/book-service/Dockerfile
     container_name: book-service
+    restart: always
     ports:
       - "8083:8083"
     environment:
@@ -222,6 +241,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=bookland-kafka:29092
+      - SEARCH_SERVICE_HOST=search-service
     depends_on:
       - book-db
       - kafka
@@ -231,6 +251,7 @@ services:
       context: .
       dockerfile: services/order-service/Dockerfile
     container_name: order-service
+    restart: always
     ports:
       - "8084:8084"
     environment:
@@ -241,6 +262,10 @@ services:
       - BOOK_SERVICE_HOST=book-service
       - USER_SERVICE_HOST=user-service
       - EVENT_SERVICE_HOST=event-service
+      - VNP_TMN_CODE=${VNP_TMN_CODE}
+      - VNP_SECRET_KEY=${VNP_SECRET_KEY}
+      - VNP_PAY_URL=${VNP_PAY_URL}
+      - VNP_RETURN_URL=${VNP_RETURN_URL}
     depends_on:
       - order-db
       - kafka
@@ -250,6 +275,7 @@ services:
       context: .
       dockerfile: services/event-service/Dockerfile
     container_name: event-service
+    restart: always
     ports:
       - "8085:8085"
     environment:
@@ -257,6 +283,8 @@ services:
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
       - ORDER_SERVICE_HOST=order-service
+      - USER_SERVICE_HOST=user-service
+      - BOOK_SERVICE_HOST=book-service
     depends_on:
       - event-db
 
@@ -265,6 +293,7 @@ services:
       context: .
       dockerfile: services/notification-service/Dockerfile
     container_name: notification-service
+    restart: always
     ports:
       - "8086:8086"
     environment:
@@ -273,6 +302,9 @@ services:
       - REDIS_PORT=6379
       - REDIS_PASSWORD=bookland123
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=bookland-kafka:29092
+      - MAIL_USERNAME=$MAIL_USERNAME
+      - MAIL_PASSWORD=$MAIL_PASSWORD
+      - USER_SERVICE_HOST=http://user-service
     depends_on:
       - notification-db
       - redis
@@ -283,6 +315,7 @@ services:
       context: .
       dockerfile: services/file-service/Dockerfile
     container_name: file-service
+    restart: always
     ports:
       - "8087:8087"
     environment:
@@ -290,6 +323,9 @@ services:
       - MINIO_ACCESS_KEY=bookland
       - MINIO_SECRET_KEY=bookland123
       - MINIO_BUCKET_NAME=bookland
+      - SUPABASE_URL=$SUPABASE_URL
+      - SUPABASE_KEY=$SUPABASE_KEY
+      - SUPABASE_BUCKET=$SUPABASE_BUCKET
     depends_on:
       - minio
 
@@ -298,14 +334,47 @@ services:
       context: .
       dockerfile: services/search-service/Dockerfile
     container_name: search-service
+    restart: always
     ports:
       - "8088:8088"
     environment:
       - SPRING_ELASTICSEARCH_URIS=http://bookland-elasticsearch:9200
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=bookland-kafka:29092
+      - BOOK_SERVICE_HOST=book-service
     depends_on:
       - elasticsearch
       - kafka
+
+  chat-service:
+    build:
+      context: .
+      dockerfile: services/chat-service/Dockerfile
+    container_name: chat-service
+    restart: always
+    ports:
+      - "8089:8089"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://chat-db:3306/chat_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=bookland-kafka:29092
+      - USER_SERVICE_HOST=user-service
+      - NOTIFICATION_SERVICE_HOST=notification-service
+    depends_on:
+      - chat-db
+      - kafka
+
+
+  frontend:
+    build:
+      context: ./BookLand_FE
+      dockerfile: Dockerfile
+    container_name: bookland-frontend
+    restart: always
+    ports:
+      - "5173:80"
+    depends_on:
+      - api-gateway
 
 volumes:
   identity_data:
@@ -316,3 +385,4 @@ volumes:
   mongo_data:
   minio_data:
   es_data:
+  chat_data:

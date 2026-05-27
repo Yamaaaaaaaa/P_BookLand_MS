@@ -1,0 +1,174 @@
+
+.recommendations-section {
+  padding: 24px 0;
+  background-color: #f0f0f0;
+}
+
+.recommendations-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 8px; /* For the green background around grid */
+  background-color: #55D583; /* Green background color from image */
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.recommendations-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 0;
+  color: white;
+}
+
+.recommendations-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  text-transform: none;
+}
+
+.spark-icon {
+  opacity: 0.9;
+}
+
+.recommendations-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  padding: 0;
+}
+
+.recommend-card {
+  background-color: white;
+  padding: 12px;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.2s;
+  border-radius: 4px;
+}
+
+.recommend-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.recommend-image-wrapper {
+  aspect-ratio: 1/1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.recommend-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.recommend-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.recommend-book-name {
+  font-size: 13px;
+  font-weight: 400;
+  color: #333;
+  margin: 0;
+  line-height: 1.4;
+  height: 36px;
+  overflow: hidden;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.recommend-price-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.recommend-current-price {
+  color: #C92127;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.recommend-discount {
+  background-color: #C92127;
+  color: white;
+  padding: 0 4px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  height: 18px;
+  display: flex;
+  align-items: center;
+}
+
+.recommend-original-price {
+  color: #999;
+  font-size: 12px;
+  text-decoration: line-through;
+  margin-top: -2px;
+}
+
+.recommend-stats {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.star-filled {
+  color: #F69113;
+  font-size: 12px;
+}
+
+.recommend-sold {
+  font-size: 11px;
+  color: #888;
+}
+
+.recommendations-footer {
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.recommend-view-all {
+  padding: 10px 100px;
+  background: white;
+  border: 2px solid #C92127;
+  color: #C92127;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.recommend-view-all:hover {
+  background-color: #C92127;
+  color: white;
+}
+
+@media (max-width: 1024px) {
+  .recommendations-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .recommendations-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

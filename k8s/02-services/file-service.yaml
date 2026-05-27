@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: file-service
+  namespace: bookland
+spec:
+  ports:
+    - port: 8087
+      targetPort: 8087
+  selector:
+    app: file-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: file-service
+  namespace: bookland
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: file-service
+  template:
+    metadata:
+      labels:
+        app: file-service
+    spec:
+      containers:
+        - name: file-service
+          image: bookland/file-service:1.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: MINIO_ENDPOINT
+              value: "http://minio:9000"
+            - name: MINIO_ACCESS_KEY
+              value: "bookland"
+            - name: MINIO_SECRET_KEY
+              value: "bookland123"
+            - name: MINIO_BUCKET_NAME
+              value: "bookland"
+          ports:
+            - containerPort: 8087

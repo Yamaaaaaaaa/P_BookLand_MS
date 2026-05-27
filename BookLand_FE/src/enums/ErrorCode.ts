@@ -1,0 +1,76 @@
+export const ErrorCode = {
+    UNCATEGORIZED_EXCEPTION: 9999,
+    INVALID_KEY: 1001,
+    USERNAME_INVALID: 1003,
+    INVALID_PASSWORD: 1004,
+    USER_NOT_EXISTED: 1005,
+    UNAUTHENTICATED: 1006,
+    UNAUTHORIZED: 1007,
+    INVALID_DOB: 1008,
+    EMAIL_EXISTED: 1009,
+    USER_EXISTED: 1010,
+    USERNAME_IS_MISSING: 1011,
+    
+    // Book errors
+    BOOK_NOT_FOUND: 2001,
+    BOOK_OUT_OF_STOCK: 2002,
+    BOOK_HAS_ORDERS: 2003,
+    
+    // Author errors
+    AUTHOR_NOT_FOUND: 2101,
+    AUTHOR_NAME_EXISTED: 2102,
+    AUTHOR_HAS_BOOKS: 2103,
+    
+    // Publisher errors
+    PUBLISHER_NOT_FOUND: 2201,
+    PUBLISHER_NAME_EXISTED: 2202,
+    PUBLISHER_HAS_BOOKS: 2203,
+    
+    // Serie errors
+    SERIE_NOT_FOUND: 2301,
+    SERIE_NAME_EXISTED: 2302,
+    SERIE_HAS_BOOKS: 2303,
+    
+    // Category errors
+    CATEGORY_NOT_FOUND: 2401,
+    
+    // Supplier errors
+    SUPPLIER_NOT_FOUND: 2501,
+    SUPPLIER_NAME_EXISTED: 2502,
+    
+    // Shipping Method errors
+    SHIPPING_METHOD_NOT_FOUND: 2601,
+    
+    // Cart errors
+    CART_NOT_FOUND: 2701,
+    CART_ITEM_NOT_FOUND: 2702,
+    
+    // Wishlist errors
+    WISHLIST_NOT_FOUND: 2801,
+    WISHLIST_ITEM_NOT_FOUND: 2802,
+
+    // Event errors
+    EVENT_NOT_FOUND: 2901,
+    EVENT_HAS_LOGS: 2902,
+    EVENT_INVALID_TIME: 2903,
+
+    // Event Target errors
+    EVENT_TARGET_BOOK_NOT_FOUND: 2910,
+    EVENT_TARGET_CATEGORY_NOT_FOUND: 2911,
+    EVENT_TARGET_SERIES_NOT_FOUND: 2912,
+    EVENT_TARGET_AUTHOR_NOT_FOUND: 2913,
+    EVENT_TARGET_PUBLISHER_NOT_FOUND: 2914,
+    EVENT_TARGET_USER_NOT_FOUND: 2915,
+    
+    // Bill errors
+    BILL_NOT_FOUND: 3001,
+    
+    // Payment Method errors
+    PAYMENT_METHOD_NOT_FOUND: 2651,
+    
+    // Role errors
+    ROLE_NOT_FOUND: 3101,
+    SOME_ROLES_NOT_FOUND: 3102
+} as const;
+
+export type ErrorCode = typeof ErrorCode[keyof typeof ErrorCode];

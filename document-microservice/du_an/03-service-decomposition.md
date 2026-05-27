@@ -281,13 +281,11 @@ DELETE /api/events/{id}               ← Xóa sự kiện
 - Gửi email (Order status, OTP, Welcome)
 - Push real-time notification qua WebSocket (STOMP)
 - Lưu lịch sử notification
-- Chat messages
 
 ### Entities được di chuyển
 | Entity hiện tại | → Service |
 |---|---|
 | `Notification` | Notification Service (MongoDB) |
-| `ChatMessage` | Notification Service (MongoDB) |
 
 ### API Endpoints
 ```
@@ -298,7 +296,6 @@ PUT    /api/notifications/read-all     ← Đọc tất cả
 WS     /ws                            ← WebSocket endpoint
        /topic/user/{userId}           ← Nhận notification cá nhân
        /topic/broadcast               ← Broadcast toàn hệ thống
-       /app/chat                      ← Gửi tin nhắn chat
 ```
 
 ### Kafka Events Consumed
@@ -402,6 +399,40 @@ Topic: book.stock.updated    → Cập nhật trường stock trong index
 
 ---
 
+## 9. Chat Service
+
+**Port**: `8089` | **DB**: `MySQL (chat_db)`
+
+### Trách nhiệm
+- Quản lý tin nhắn chat giữa khách hàng và Admin
+- Lưu trữ lịch sử tin nhắn trong MySQL
+- Giao tiếp thời gian thực qua WebSocket (STOMP/SockJS) trên endpoint riêng
+- Đánh dấu tin nhắn đã đọc và đếm số tin nhắn chưa đọc
+- Lấy danh sách các cuộc hội thoại phục vụ Admin
+
+### Entities được di chuyển
+| Entity hiện tại | → Service |
+|---|---|
+| `ChatMessage` | Chat Service (MySQL) |
+
+### API Endpoints
+```
+GET    /api/chat/history/{otherUserId}  ← Lịch sử chat với user khác
+GET    /api/chat/conversations          ← Danh sách hội thoại (Admin)
+POST   /api/chat/send                   ← Gửi tin nhắn
+PUT    /api/chat/mark-read/{otherUserId} ← Đánh dấu đã đọc
+GET    /api/chat/unread-count           ← Số tin chưa đọc
+
+WS     /chat-ws                         ← WebSocket endpoint
+       /user/queue/chat                 ← Nhận tin nhắn thời gian thực
+```
+
+### Dependencies
+- **User Service**: Lấy thông tin Profile (REST call)
+- **Identity Service**: Nhận `userId` qua Gateway header
+
+---
+
 ## Tóm tắt phân rã
 
 ```
@@ -412,9 +443,10 @@ Monolith (30 entities, 1 DB)
         ├── Book Service      (9 entities: Book, Author, Category, Publisher...)
         ├── Order Service     (7 entities: Cart, Bill, Payment, Shipping...)
         ├── Event Service     (6 entities: Event, Rules, Actions, Logs...)
-        ├── Notification Svc  (2 entities: Notification, ChatMessage → MongoDB)
+        ├── Notification Svc  (1 entity: Notification → MongoDB)
         ├── File Service      (0 entities → Stateless storage service)
-        └── Search Service    (0 entities → Elasticsearch index)
+        ├── Search Service    (0 entities → Elasticsearch index)
+        └── Chat Service      (1 entity: ChatMessage → MySQL)
 ```
 
 ---

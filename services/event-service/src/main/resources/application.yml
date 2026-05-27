@@ -16,7 +16,20 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 50MB
 
 services:
   order-service:
     url: http://${ORDER_SERVICE_HOST:localhost}:8084
+  book-service:
+    url: http://${BOOK_SERVICE_HOST:localhost}:8083
+  user-service:
+    url: http://${USER_SERVICE_HOST:localhost}:8082
+
+supabase:
+  url: ${SUPABASE_URL}
+  service-key: ${SUPABASE_KEY}
+  bucket: ${SUPABASE_BUCKET}

@@ -13,6 +13,7 @@
 - [6. Event & Promotion Service (Khuyến mãi & Banner sự kiện)](#6-event--promotion-service-khuyến-mãi--banner-sự-kiện)
 - [7. File Service (Quản lý Upload hình ảnh qua MinIO/S3)](#7-file-service-quản-lý-upload-hình-ảnh-qua-minios3)
 - [8. Search Service (Tìm kiếm nâng cao qua Elasticsearch)](#8-search-service-tìm-kiếm-nâng-cao-qua-elasticsearch)
+- [9. Chat Service (WebSocket & Chat realtime)](#9-chat-service-websocket--chat-realtime)
 
 ---
 
@@ -42,9 +43,10 @@ CLIENT
   ├── → Book Service      :8083
   ├── → Order Service     :8084
   ├── → Event Service     :8085
-  ├── → Notification Svc  :8086
+  ├── → Notification Svc  :8086  (/ws WebSocket)
   ├── → File Service      :8087
-  └── → Search Service    :8088
+  ├── → Search Service    :8088
+  └── → Chat Service      :8089  (/chat-ws WebSocket)
 ```
 
 ### 1.2 Tech Stack
@@ -130,6 +132,20 @@ spring:
           filters:
             - AuthenticationFilter
 
+        # Chat Service REST
+        - id: chat-service
+          uri: http://chat-service:8089
+          predicates:
+            - Path=/api/chat/**
+          filters:
+            - AuthenticationFilter
+
+        # Chat Service WebSocket (endpoint riêng /chat-ws)
+        - id: chat-service-ws
+          uri: http://chat-service:8089
+          predicates:
+            - Path=/chat-ws/**
+
         # File Service
         - id: file-service
           uri: http://file-service:8087
@@ -150,13 +166,17 @@ spring:
 @Component
 public class AuthenticationFilter implements GatewayFilter, Ordered {
 
-    // Các path không cần xác thực
-    private final List<String> PUBLIC_PATHS = List.of(
-        "/auth/login", "/auth/register", "/auth/refresh",
-        "/auth/google", "/vnpay/return", "/vnpay/ipn",
-        "/api/books", "/api/categories", "/api/authors",
-        "/api/search"
-    );
+    // Các path không cần xác thực (public endpoints)
+    private String[] publicEndpoints = {
+        "/auth/.*",
+        "/swagger-ui.html",
+        "/swagger-ui/.*",
+        "/v3/api-docs.*",
+        // ... swagger docs các service ...
+        "/ws/.*",       // Notification WebSocket
+        "/chat-ws/.*", // Chat WebSocket (tự xác thực qua STOMP header)
+        "/api/online-payment/.*"
+    };
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -865,7 +885,7 @@ public interface EventServiceClient {
 
 ## 5. Notification Service (MongoDB, WebSocket & Email)
 
-Xử lý mọi loại thông báo: Email, WebSocket push, và Chat.
+Xử lý các thông báo in-app qua WebSocket push và gửi Email.
 
 ### 5.1 Tổng quan
 **Port**: `8086` | **Database**: `MongoDB (notification_db)` | **Kafka**: Consumer
@@ -893,19 +913,6 @@ Xử lý mọi loại thông báo: Email, WebSocket push, và Chat.
   "read": false,
   "createdAt": "ISODate",
   "expireAt": "ISODate"        // TTL index: tự xóa sau 30 ngày
-}
-
-// Collection: chat_messages
-{
-  "_id": "ObjectId",
-  "senderId": "42",
-  "senderName": "Nguyễn Văn A",
-  "senderAvatar": "https://...",
-  "receiverId": "1",           // Admin ID
-  "content": "Tôi chưa nhận được hàng",
-  "type": "TEXT | IMAGE",
-  "sentAt": "ISODate",
-  "read": false
 }
 ```
 
@@ -981,9 +988,6 @@ GET  /api/notifications          ← Danh sách notification của tôi
 PUT  /api/notifications/{id}/read    ← Đánh dấu đã đọc 1 thông báo
 PUT  /api/notifications/read-all     ← Đánh dấu đọc tất cả
 GET  /api/notifications/unread-count ← Số thông báo chưa đọc
-
-GET  /api/chat/messages          ← Lịch sử chat với admin
-POST /api/chat/messages          ← Gửi tin nhắn mới (qua HTTP, sync về DB)
 ```
 
 ### 5.7 Email Templates (Thymeleaf)
@@ -1485,4 +1489,150 @@ public class InitialIndexSync implements ApplicationRunner {
 
 ---
 
-*← [03 - Phân rã service](./03-service-decomposition.md) | [12 - Giao tiếp](./12-communication.md) →*
+## 9. Chat Service (WebSocket & Chat realtime)
+
+Dịch vụ quản lý chat realtime giữa khách hàng (User) và Admin thông qua kết nối WebSocket (STOMP/SockJS) tách biệt.
+
+### 9.1 Tổng quan
+- **Port**: `8089`
+- **Database**: MySQL (`chat_db`)
+- **WebSocket Endpoint**: `/chat-ws` (SockJS)
+
+### 9.2 Cấu trúc mã nguồn (Project Structure)
+```text
+chat-service/
+├── pom.xml                          ← spring-boot-starter-websocket
+└── src/main/java/com/bookland/chat/
+    ├── ChatServiceApplication.java
+    ├── config/
+    │   ├── WebSocketConfig.java     ← STOMP broker, endpoint /chat-ws
+    │   ├── SecurityConfig.java      ← Security configurations
+    │   └── SwaggerConfig.java
+    ├── controller/
+    │   └── ChatMessageController.java   ← REST API (history, conversations, unread...)
+    ├── service/
+    │   └── ChatMessageService.java      ← Xử lý nghiệp vụ & gửi tin nhắn qua WebSocket
+    ├── entity/
+    │   └── ChatMessage.java
+    ├── repository/
+    │   └── ChatMessageRepository.java
+    └── dto/
+        ├── request/SendChatMessageRequest.java
+        └── response/ChatMessageResponse.java
+```
+
+### 9.3 Database Schema (chat_db)
+```sql
+CREATE TABLE chat_messages (
+    id              BIGINT PRIMARY KEY AUTO_INCREMENT,
+    from_user_id    BIGINT NOT NULL,
+    to_user_id      BIGINT NOT NULL,
+    content         TEXT NOT NULL,
+    is_read         BOOLEAN DEFAULT FALSE,
+    created_at      TIMESTAMP DEFAULT NOW()
+);
+
+-- Index cho query history nhanh
+CREATE INDEX idx_chat_history ON chat_messages (from_user_id, to_user_id, created_at);
+CREATE INDEX idx_unread ON chat_messages (to_user_id, is_read);
+```
+
+### 9.4 Cấu hình WebSocket (STOMP & SockJS)
+Cấu hình WebSocket Broker và intercept JWT Token tại CONNECT frame để thiết lập user principal:
+```java
+@Configuration
+@EnableWebSocketMessageBroker
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
+    @Override
+    public void configureMessageBroker(MessageBrokerRegistry config) {
+        config.enableSimpleBroker("/topic", "/queue");
+        config.setApplicationDestinationPrefixes("/app");
+        config.setUserDestinationPrefix("/user");
+    }
+
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/chat-ws")
+                .setAllowedOriginPatterns("*")
+                .withSockJS();
+    }
+
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(new ChannelInterceptor() {
+            @Override
+            public Message<?> preSend(Message<?> message, MessageChannel channel) {
+                StompHeaderAccessor accessor = MessageHeaderAccessor
+                        .getAccessor(message, StompHeaderAccessor.class);
+                if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
+                    String authHeader = accessor.getFirstNativeHeader("Authorization");
+                    if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                        String email = getEmailFromToken(authHeader.substring(7));
+                        if (email != null) {
+                            accessor.setUser(new UsernamePasswordAuthenticationToken(
+                                    email, null, new ArrayList<>()));
+                        }
+                    }
+                }
+                return message;
+            }
+        });
+    }
+}
+```
+
+### 9.5 Nghiệp vụ gửi tin nhắn và đẩy WebSocket
+Khi một user gửi tin nhắn qua API REST, tin nhắn được lưu vào DB và đẩy đồng thời đến người gửi và người nhận qua `SimpMessagingTemplate` để đảm bảo đồng bộ realtime:
+```java
+@Transactional
+public ChatMessageResponse sendMessage(Long fromUserId, SendChatMessageRequest request) {
+    UserProfileResponse fromUser = getProfileSafely(fromUserId);
+    UserProfileResponse toUser   = getUserByEmail(request.getToEmail());
+
+    ChatMessage saved = chatMessageRepository.save(ChatMessage.builder()
+            .fromUserId(fromUser.getId())
+            .toUserId(toUser.getId())
+            .content(request.getContent())
+            .isRead(false)
+            .build());
+
+    ChatMessageResponse response = convertToResponse(saved, fromUser, toUser);
+
+    // Gửi realtime qua WebSocket
+    messagingTemplate.convertAndSendToUser(toUser.getEmail(), "/queue/chat", response);
+    messagingTemplate.convertAndSendToUser(fromUser.getEmail(), "/queue/chat", response);
+
+    return response;
+}
+```
+
+### 9.6 REST API Endpoints
+Tất cả các API này được cấu hình xác thực JWT qua API Gateway:
+```text
+GET  /api/chat/history/{otherUserId}  ← Lấy lịch sử chat với user khác
+GET  /api/chat/conversations          ← Lấy danh sách hội thoại của user hiện tại
+POST /api/chat/send                   ← Gửi tin nhắn mới
+PUT  /api/chat/mark-read/{otherUserId} ← Đánh dấu đã đọc tất cả tin nhắn từ user này
+GET  /api/chat/unread-count           ← Lấy tổng số tin nhắn chưa đọc
+```
+
+### 9.7 dependencies chính trong `pom.xml`
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-websocket</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-jpa</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-openfeign</artifactId>
+</dependency>
+```
+
+---
+
+*← [03 - Phân rã service](./03-service-decomposition.md) | [05 - Chat Service & WebSocket](./05-chat-service-websocket.md) →*

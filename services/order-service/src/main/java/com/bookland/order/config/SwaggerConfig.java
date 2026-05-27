@@ -1,0 +1,41 @@
+package com.bookland.order.config;
+
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import java.util.List;
+
+@Configuration
+public class SwaggerConfig {
+
+    @Bean
+    public OpenAPI orderServiceOpenAPI() {
+        final String securitySchemeName = "BearerAuth";
+        return new OpenAPI()
+                .info(new Info()
+                        .title("Order Service API")
+                        .description("Quản lý đơn hàng, giỏ hàng, phương thức thanh toán và vận chuyển cho BookLand Microservices")
+                        .version("1.0.0")
+                        .contact(new Contact()
+                                .name("BookLand Team")
+                                .email("support@bookland.com")))
+                .servers(List.of(
+                        new Server().url("http://localhost:8080").description("Via API Gateway (Dev)"),
+                        new Server().url("http://localhost:8084").description("Direct - Local Dev")))
+                .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
+                .components(new Components()
+                        .addSecuritySchemes(securitySchemeName,
+                                new SecurityScheme()
+                                        .name(securitySchemeName)
+                                        .type(SecurityScheme.Type.HTTP)
+                                        .scheme("bearer")
+                                        .bearerFormat("JWT")));
+    }
+}

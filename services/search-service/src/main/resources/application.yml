@@ -16,3 +16,9 @@ spring:
       group-id: search-group
       properties:
         spring.json.trusted.packages: "com.bookland.*"
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html

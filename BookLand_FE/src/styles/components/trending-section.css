@@ -1,0 +1,288 @@
+
+.trending-section {
+  padding: 24px 0;
+  background-color: #f0f0f0;
+}
+
+.trending-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px 16px 0 16px; /* Added 16px top padding */
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Header with Pink Background */
+.trending-header {
+  background-color: #FCDDEF; /* Light pink background from reference */
+  padding: 12px 16px;
+  border-radius: 8px; /* Added rounded corners to the pink bar */
+}
+
+.trending-title-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.trending-icon-box {
+  background-color: #C92127;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.trending-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+  margin: 0;
+}
+
+/* Tabs */
+.trending-tabs {
+  display: flex;
+  gap: 32px;
+  padding: 0 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.trending-tab-btn {
+  background: none;
+  border: none;
+  padding: 16px 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.trending-tab-btn:hover {
+  color: #C92127;
+}
+
+.trending-tab-btn.active {
+  color: #C92127;
+  font-weight: 700;
+}
+
+.trending-tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: #C92127;
+  border-radius: 3px 3px 0 0;
+}
+
+/* Grid */
+.trending-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
+  padding: 20px 16px;
+}
+
+.trending-card {
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.2s;
+}
+
+.trending-card:hover {
+  transform: translateY(-4px);
+}
+
+.trending-image-wrapper {
+  position: relative;
+  aspect-ratio: 1/1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.trending-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.trending-badge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.trending-badge--hot {
+  background-color: #F69113;
+  color: white;
+}
+
+.trending-badge--new {
+  background-color: #F6413A;
+  color: white;
+}
+
+.trending-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.trending-book-name {
+  font-size: 13px; /* Slightly smaller to match */
+  font-weight: 400;
+  color: #333;
+  margin: 0;
+  line-height: 1.4;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.inline-badge {
+  background-color: #F69113;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 2px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.inline-badge--new {
+  background-color: #F6413A;
+}
+
+.trending-price-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.trending-current-price {
+  color: #C92127;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.trending-discount {
+  background-color: #C92127;
+  color: white;
+  padding: 0 4px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  height: 18px;
+  display: flex;
+  align-items: center;
+}
+
+.trending-original-price {
+  color: #999;
+  font-size: 12px;
+  text-decoration: line-through;
+  margin-top: -2px;
+}
+
+/* Sold Bar - Detailed Match */
+.trending-sold-bar {
+  margin-top: 12px;
+  height: 18px;
+  background-color: #FDE8E9; /* Background color from image */
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.trending-sold-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background-color: #F9B7BA; /* Normal progress pink */
+  border-radius: 10px;
+}
+
+.trending-sold-bar--warning .trending-sold-progress {
+  background-color: #C92127; /* Red for warning */
+}
+
+.trending-sold-text {
+  position: relative;
+  z-index: 1;
+  font-size: 11px;
+  color: #90474a; /* Pinkish-grey text for normal */
+  font-weight: 600;
+}
+
+.trending-sold-bar--warning .trending-sold-text {
+  color: white; /* White text for warning */
+}
+
+/* Footer Section */
+.trending-footer {
+  padding: 24px 16px;
+  display: flex;
+  justify-content: center;
+  border-top: 1px solid #eee;
+}
+
+.trending-view-more {
+  padding: 8px 100px;
+  background: white;
+  border: 2px solid #C92127;
+  color: #C92127;
+  font-weight: 700;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.trending-view-more:hover {
+  background-color: #C92127;
+  color: white;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .trending-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .trending-tabs {
+    gap: 16px;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .trending-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

@@ -1,0 +1,42 @@
+/* ===========================================
+   BASE STYLES
+   =========================================== */
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+.shop-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--shop-bg-primary);
+  font-family: var(--font-body);
+  color: var(--shop-text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+.shop-container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--container-padding);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.shop-main {
+  flex: 1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .shop-container {
+    padding: 0 1rem;
+  }
+}

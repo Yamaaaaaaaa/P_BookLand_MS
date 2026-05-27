@@ -1,6 +1,10 @@
 server:
   port: 8080
 
+app:
+  services:
+    identity: http://${IDENTITY_SERVICE_HOST:localhost}:8081
+
 spring:
   application:
     name: api-gateway
@@ -11,35 +15,77 @@ spring:
       password: ${REDIS_PASSWORD:bookland123}
   cloud:
     gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedHeaders: "*"
+            allowedMethods: "*"
+            allowCredentials: true
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin, RETAIN_FIRST
+        - DedupeResponseHeader=Access-Control-Allow-Credentials, RETAIN_FIRST
       routes:
         # Identity Service
         - id: identity-service
           uri: http://${IDENTITY_SERVICE_HOST:localhost}:8081
           predicates:
-            - Path=/auth/**, /api/roles/**
+            - Path=/auth/**, /api/users/**, /api/roles/**
           filters:
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 10
                 redis-rate-limiter.burstCapacity: 20
 
+        # Identity Service API Docs
+        - id: identity-service-api-docs
+          uri: http://${IDENTITY_SERVICE_HOST:localhost}:8081
+          predicates:
+            - Path=/identity-service/v3/api-docs
+          filters:
+            - RewritePath=/identity-service/v3/api-docs, /v3/api-docs
+
         # User Service
         - id: user-service
           uri: http://${USER_SERVICE_HOST:localhost}:8082
           predicates:
-            - Path=/api/users/**, /api/addresses/**, /api/wishlists/**
+            - Path=/users/**, /api/addresses/**, /api/wishlists/**
+
+        # User Service API Docs
+        - id: user-service-api-docs
+          uri: http://${USER_SERVICE_HOST:localhost}:8082
+          predicates:
+            - Path=/user-service/v3/api-docs
+          filters:
+            - RewritePath=/user-service/v3/api-docs, /v3/api-docs
 
         # Book Service
         - id: book-service
           uri: http://${BOOK_SERVICE_HOST:localhost}:8083
           predicates:
-            - Path=/api/books/**, /api/authors/**, /api/categories/**, /api/series/**, /api/publishers/**
+            - Path=/api/books/**, /api/authors/**, /api/categories/**, /api/series/**, /api/publishers/**, /api/admin/**, /book-comments/**
+
+        # Book Service API Docs
+        - id: book-service-api-docs
+          uri: http://${BOOK_SERVICE_HOST:localhost}:8083
+          predicates:
+            - Path=/book-service/v3/api-docs
+          filters:
+            - RewritePath=/book-service/v3/api-docs, /v3/api-docs
 
         # Order Service
         - id: order-service
           uri: http://${ORDER_SERVICE_HOST:localhost}:8084
           predicates:
-            - Path=/api/bills/**, /api/carts/**, /vnpay/**, /api/payment-methods/**, /api/shipping-methods/**
+            - Path=/api/bills/**, /api/carts/**, /api/cart/**, /api/online-payment/**, /api/payment-methods/**, /api/shipping-methods/**
+
+        # Order Service API Docs
+        - id: order-service-api-docs
+          uri: http://${ORDER_SERVICE_HOST:localhost}:8084
+          predicates:
+            - Path=/order-service/v3/api-docs
+          filters:
+            - RewritePath=/order-service/v3/api-docs, /v3/api-docs
 
         # Event Service
         - id: event-service
@@ -47,23 +93,75 @@ spring:
           predicates:
             - Path=/api/events/**
 
+        # Event Service API Docs
+        - id: event-service-api-docs
+          uri: http://${EVENT_SERVICE_HOST:localhost}:8085
+          predicates:
+            - Path=/event-service/v3/api-docs
+          filters:
+            - RewritePath=/event-service/v3/api-docs, /v3/api-docs
+
         # Notification Service
         - id: notification-service
           uri: http://${NOTIFICATION_SERVICE_HOST:localhost}:8086
           predicates:
             - Path=/api/notifications/**, /ws/**
 
+        # Chat Service WebSocket (tách riêng khỏi notification-service)
+        - id: chat-service-ws
+          uri: http://${CHAT_SERVICE_HOST:localhost}:8089
+          predicates:
+            - Path=/chat-ws/**
+
+        # Notification Service API Docs
+        - id: notification-service-api-docs
+          uri: http://${NOTIFICATION_SERVICE_HOST:localhost}:8086
+          predicates:
+            - Path=/notification-service/v3/api-docs
+          filters:
+            - RewritePath=/notification-service/v3/api-docs, /v3/api-docs
+
+        # Chat Service
+        - id: chat-service
+          uri: http://${CHAT_SERVICE_HOST:localhost}:8089
+          predicates:
+            - Path=/api/chat/**, /chat/**
+
+        # Chat Service API Docs
+        - id: chat-service-api-docs
+          uri: http://${CHAT_SERVICE_HOST:localhost}:8089
+          predicates:
+            - Path=/chat-service/v3/api-docs
+          filters:
+            - RewritePath=/chat-service/v3/api-docs, /v3/api-docs
+
         # File Service
         - id: file-service
           uri: http://${FILE_SERVICE_HOST:localhost}:8087
           predicates:
-            - Path=/api/files/**
+            - Path=/api/files/**, /api/uploads/**
+
+        # File Service API Docs
+        - id: file-service-api-docs
+          uri: http://${FILE_SERVICE_HOST:localhost}:8087
+          predicates:
+            - Path=/file-service/v3/api-docs
+          filters:
+            - RewritePath=/file-service/v3/api-docs, /v3/api-docs
 
         # Search Service
         - id: search-service
           uri: http://${SEARCH_SERVICE_HOST:localhost}:8088
           predicates:
             - Path=/api/search/**
+
+        # Search Service API Docs
+        - id: search-service-api-docs
+          uri: http://${SEARCH_SERVICE_HOST:localhost}:8088
+          predicates:
+            - Path=/search-service/v3/api-docs
+          filters:
+            - RewritePath=/search-service/v3/api-docs, /v3/api-docs
 
 resilience4j:
   circuitbreaker:
@@ -74,3 +172,29 @@ resilience4j:
         permittedNumberOfCallsInHalfOpenState: 3
         waitDurationInOpenState: 10s
         failureRateThreshold: 50
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: Identity Service
+        url: /identity-service/v3/api-docs
+      - name: User Service
+        url: /user-service/v3/api-docs
+      - name: Book Service
+        url: /book-service/v3/api-docs
+      - name: Search Service
+        url: /search-service/v3/api-docs
+      - name: Event Service
+        url: /event-service/v3/api-docs
+      - name: File Service
+        url: /file-service/v3/api-docs
+      - name: Notification Service
+        url: /notification-service/v3/api-docs
+      - name: Order Service
+        url: /order-service/v3/api-docs
+      - name: Chat Service
+        url: /chat-service/v3/api-docs
+

@@ -1,0 +1,20 @@
+package com.bookland.notification.dto.response;
+
+import lombok.*;
+import java.time.LocalDate;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserProfileResponse {
+    private String id;
+    private String userId;
+    private String username;
+    private String email;
+    private String firstName;
+    private String lastName;
+    private LocalDate dob;
+    private String phone;
+    private String city;
+}
