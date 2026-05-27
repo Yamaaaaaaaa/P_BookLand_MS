@@ -159,12 +159,13 @@ const CheckoutPage = () => {
             const response = await billService.createBill(billRequest);
 
             if (response.result) {
-                // Clear the cart after successful order
+                // Clear only the purchased items from the cart
                 try {
-                    await cartService.clearCart(userId);
+                    const purchasedBookIds = cartItems.map(item => item.bookId);
+                    await cartService.removeMultipleFromMyCart(purchasedBookIds);
                 } catch (clearError) {
-                    console.error('Failed to clear cart:', clearError);
-                    // We don't block the user if clear cart fails, as the bill is already created
+                    console.error('Failed to remove purchased items from cart:', clearError);
+                    // We don't block the user if it fails, as the bill is already created
                 }
 
                 toast.success(t('checkout.success_message'));
