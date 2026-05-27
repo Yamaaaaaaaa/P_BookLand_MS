@@ -40,5 +40,8 @@ spec:
               value: "bookland123"
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
               value: "kafka:9092"
+          envFrom:
+            - secretRef:
+                name: bookland-secret
           ports:
             - containerPort: 8086

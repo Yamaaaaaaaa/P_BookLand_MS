@@ -44,5 +44,8 @@ spec:
               value: "http://user-service:8082"
             - name: SERVICES_EVENT_SERVICE_URL
               value: "http://event-service:8085"
+          envFrom:
+            - secretRef:
+                name: bookland-secret
           ports:
             - containerPort: 8084
