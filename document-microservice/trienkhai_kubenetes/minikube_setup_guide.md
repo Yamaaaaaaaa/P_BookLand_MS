@@ -181,6 +181,9 @@ docker build -t bookland/notification-service:1.0 -f services/notification-servi
 docker build -t bookland/order-service:1.0 -f services/order-service/Dockerfile .
 docker build -t bookland/search-service:1.0 -f services/search-service/Dockerfile .
 docker build -t bookland/user-service:1.0 -f services/user-service/Dockerfile .
+
+# Build Logging Infrastructure
+docker build -t bookland/fluentd:1.0 -f fluentd/Dockerfile ./fluentd
 ```
 
 > [!TIP]
@@ -285,7 +288,36 @@ Sau khi cấu hình hosts, hãy mở trình duyệt trên máy cá nhân và tru
 
 ---
 
-## 🔄 9. Phụ Lục: Cập Nhật Code Mới & Khởi Động Lại Hệ Thống
+## 📊 9. Bước 8: Truy Cập & Giám Sát Logs Tập Trung (EFK Stack)
+
+Để giám sát log tập trung của toàn bộ 11 microservices BookLand trên môi trường Kubernetes Cloud, chúng ta sử dụng cụm **Elasticsearch, Fluentd, và Kibana (EFK)** đã được triển khai.
+
+### Bước 8a: Tạo kênh kết nối an toàn (Port-Forward) tới Kibana
+Vì các dịch vụ quản lý log chứa dữ liệu nhạy cảm của hệ thống, Kibana mặc định không nên được public thẳng ra internet. Hãy mở một Terminal mới **trên máy tính cá nhân của bạn** và chạy lệnh sau để thiết lập tunnel bảo mật:
+
+```bash
+kubectl port-forward svc/bookland-kibana 5601:5601 -n bookland
+```
+*(Giữ nguyên Terminal này chạy trong suốt quá trình bạn làm việc hoặc thực hiện demo).*
+
+### Bước 8b: Đăng nhập Kibana & Cấu hình Data View lần đầu
+1. Mở trình duyệt trên máy cá nhân và truy cập: [http://localhost:5601](http://localhost:5601).
+2. Tại menu bên trái, cuộn xuống dưới cùng chọn **Management** -> **Stack Management**.
+3. Chọn mục **Data Views** -> click chọn **Create data view**.
+4. Thiết lập thông số:
+   - **Name**: `bookland-*`
+   - **Timestamp field**: Chọn `@timestamp`
+5. Nhấn **Save data view to Kibana**.
+
+### Bước 8c: Thực hiện truy vấn và tìm kiếm logs (Demo & Kiểm thử)
+Bây giờ, hãy chuyển tới mục **Discover** từ Menu chính bên trái, chọn Data View là `bookland-*`. Bạn có thể sử dụng thanh tìm kiếm (KQL) để truy vết lỗi cực nhanh:
+- **Lọc logs theo dịch vụ**: `container_name : "book-service"`
+- **Tìm kiếm logs lỗi / Exception**: `log : "Exception" or log : "ERROR"`
+- **Truy vết một chuỗi logic**: Click xem chi tiết dòng log để đọc toàn bộ Stacktrace chi tiết của Spring Boot mà không cần SSH vào VPS!
+
+---
+
+## 🔄 10. Phụ Lục: Cập Nhật Code Mới & Khởi Động Lại Hệ Thống
 
 Khi bạn thay đổi cấu hình dự án hoặc cập nhật mã nguồn (ví dụ: sửa file `application.yml`, đổi logic Java...), hãy chạy các bước sau trên VPS để cập nhật hệ thống:
 
@@ -316,6 +348,7 @@ docker build -t bookland/notification-service:1.0 -f services/notification-servi
 docker build -t bookland/order-service:1.0 -f services/order-service/Dockerfile .
 docker build -t bookland/search-service:1.0 -f services/search-service/Dockerfile .
 docker build -t bookland/user-service:1.0 -f services/user-service/Dockerfile .
+docker build -t bookland/fluentd:1.0 -f fluentd/Dockerfile ./fluentd
 ```
 
 ### Bước 4: Khởi động lại các Service trên Kubernetes
