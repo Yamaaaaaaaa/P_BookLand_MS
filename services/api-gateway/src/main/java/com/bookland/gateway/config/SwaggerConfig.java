@@ -17,10 +17,10 @@ import java.util.List;
 @Configuration
 public class SwaggerConfig {
 
-    @Value("${app.openapi.dev-url:http://localhost:8080}")
+    @Value("${app.openapi.dev-url:http://api.bookland.local}")
     private String devUrl;
 
-    @Value("${app.openapi.prod-url:http://3.107.238.92:8080}")
+    @Value("${app.openapi.prod-url:http://79.108.225.251:8080}")
     private String prodUrl;
 
     @Bean
