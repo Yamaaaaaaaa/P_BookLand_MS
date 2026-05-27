@@ -146,6 +146,31 @@ services:
     volumes:
       - es_data:/usr/share/elasticsearch/data
 
+  # Fluentd Centralized Logger
+  fluentd:
+    build:
+      context: ./fluentd
+    container_name: bookland-fluentd
+    volumes:
+      - ./fluentd/conf:/fluentd/etc
+      - fluentd_log:/fluentd/log
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+    depends_on:
+      - elasticsearch
+
+  # Kibana
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: bookland-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+
   # MinIO (File Storage — self-hosted S3)
   minio:
     image: minio/minio:latest
@@ -187,6 +212,12 @@ services:
       - CHAT_SERVICE_HOST=chat-service
     depends_on:
       - redis
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: "tcp://127.0.0.1:24224"
+        fluentd-async: "true"
+        tag: "docker.{{.Name}}"
 
   identity-service:
     build:
@@ -209,6 +240,12 @@ services:
       - identity-db
       - redis
       - kafka
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: "tcp://127.0.0.1:24224"
+        fluentd-async: "true"
+        tag: "docker.{{.Name}}"
 
   user-service:
     build:
@@ -227,6 +264,12 @@ services:
     depends_on:
       - user-db
       - kafka
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: "tcp://127.0.0.1:24224"
+        fluentd-async: "true"
+        tag: "docker.{{.Name}}"
 
   book-service:
     build:
@@ -245,6 +288,12 @@ services:
     depends_on:
       - book-db
       - kafka
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: "tcp://127.0.0.1:24224"
+        fluentd-async: "true"
+        tag: "docker.{{.Name}}"
 
   order-service:
     build:
@@ -269,6 +318,12 @@ services:
     depends_on:
       - order-db
       - kafka
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: "tcp://127.0.0.1:24224"
+        fluentd-async: "true"
+        tag: "docker.{{.Name}}"
 
   event-service:
     build:
@@ -287,6 +342,12 @@ services:
       - BOOK_SERVICE_HOST=book-service
     depends_on:
       - event-db
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: "tcp://127.0.0.1:24224"
+        fluentd-async: "true"
+        tag: "docker.{{.Name}}"
 
   notification-service:
     build:
@@ -309,6 +370,12 @@ services:
       - notification-db
       - redis
       - kafka
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: "tcp://127.0.0.1:24224"
+        fluentd-async: "true"
+        tag: "docker.{{.Name}}"
 
   file-service:
     build:
@@ -328,6 +395,12 @@ services:
       - SUPABASE_BUCKET=$SUPABASE_BUCKET
     depends_on:
       - minio
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: "tcp://127.0.0.1:24224"
+        fluentd-async: "true"
+        tag: "docker.{{.Name}}"
 
   search-service:
     build:
@@ -344,6 +417,12 @@ services:
     depends_on:
       - elasticsearch
       - kafka
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: "tcp://127.0.0.1:24224"
+        fluentd-async: "true"
+        tag: "docker.{{.Name}}"
 
   chat-service:
     build:
@@ -363,6 +442,12 @@ services:
     depends_on:
       - chat-db
       - kafka
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: "tcp://127.0.0.1:24224"
+        fluentd-async: "true"
+        tag: "docker.{{.Name}}"
 
 
   frontend:
@@ -375,6 +460,12 @@ services:
       - "5173:80"
     depends_on:
       - api-gateway
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: "tcp://127.0.0.1:24224"
+        fluentd-async: "true"
+        tag: "docker.{{.Name}}"
 
 volumes:
   identity_data:
@@ -386,3 +477,4 @@ volumes:
   minio_data:
   es_data:
   chat_data:
+  fluentd_log:

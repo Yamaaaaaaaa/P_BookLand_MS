@@ -38,5 +38,8 @@ spec:
               value: "bookland123"
             - name: MINIO_BUCKET_NAME
               value: "bookland"
+          envFrom:
+            - secretRef:
+                name: bookland-secret
           ports:
             - containerPort: 8087

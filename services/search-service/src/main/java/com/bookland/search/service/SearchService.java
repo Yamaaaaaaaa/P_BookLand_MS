@@ -201,6 +201,7 @@ public class SearchService {
 
     private BookDocument toDocument(BookDTO dto) {
         return BookDocument.builder()
+                .id(dto.getId() != null ? dto.getId().toString() : null)
                 .bookId(dto.getId())
                 .name(dto.getName())
                 .description(dto.getDescription())
